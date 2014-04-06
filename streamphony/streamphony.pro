@@ -7,7 +7,7 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 SUBDIRS +=  utils \
-    Main \
+    mainapp \
     audioserver \
     audioplayer \
 

@@ -11,10 +11,10 @@
 
 AudioPlayer::AudioPlayer(QObject *parent)
     : QObject(parent)
+    , m_decoder(parent)
     , m_deviceInfo(QAudioDeviceInfo::defaultOutputDevice())
 {
     QAudioFormat format;
-    // Set up the format, eg.
     format.setSampleRate(44100);
     format.setChannelCount(2);
     format.setSampleSize(16);
@@ -59,7 +59,7 @@ AudioPlayer::AudioPlayer(QObject *parent)
     });
 
     connect (&m_decoder, utils::resolve_overload<QAudioDecoder::Error>::of(&QAudioDecoder::error), [&](QAudioDecoder::Error error) {
-       debugAudioPlayer() << m_decoder.errorString();
+       debugAudioPlayer() << error << m_decoder.errorString();
     });
 
     m_device.reset(m_output->start());
