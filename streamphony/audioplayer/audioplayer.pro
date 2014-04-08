@@ -7,7 +7,7 @@
 include(../global.pri);
 include(../utils/utils.pri);
 
-QT       += core multimedia
+QT       += core multimedia phonon4qt5
 
 QT       -= gui
 
@@ -19,8 +19,9 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    audioplayer.cpp
+    phononmediaplayer.cpp
 
 HEADERS += \
-    audioplayer.h \
-    debug.h
+    phononmediaplayer.h
+
+DEFINES += DEBUG_AUDIO_PLAYER

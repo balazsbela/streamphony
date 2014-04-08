@@ -1,3 +1,4 @@
+#include "phononmediaplayer.h"
 #include "audioplayer.h"
 
 #include <QCoreApplication>
@@ -6,7 +7,8 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    AudioPlayer player;
+    PhononMediaPlayer player;
+    player.play();
 
     return a.exec();
 }

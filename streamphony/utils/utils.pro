@@ -14,7 +14,8 @@ CONFIG += staticlib
 
 SOURCES +=
 
-HEADERS += resolve_overload.h
+HEADERS += resolve_overload.h \
+    singleshottimer.h
 
 OTHER_FILES += \
     utils.pri
