@@ -21,7 +21,7 @@ class PhononMediaPlayer : public QObject
     Q_OBJECT
 public:
     explicit PhononMediaPlayer(QObject *parent = 0);
-    ~PhononMediaPlayer();
+    ~PhononMediaPlayer() override;
     void play();
 
 private:
