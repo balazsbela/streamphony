@@ -1,5 +1,6 @@
 #include "lighthttpdaemon.h"
 #include "resolve_overload.h"
+#include "contentresolver.h"
 
 #include <QTcpSocket>
 
@@ -23,6 +24,11 @@ LightHttpDaemon::~LightHttpDaemon()
 {
 }
 
+void LightHttpDaemon::setContentResolver(ContentResolver *contentResolver)
+{
+    m_contentResolver.reset(contentResolver);
+}
+
 void LightHttpDaemon::acceptConnection()
 {
     QTcpSocket *socket = nextPendingConnection();
@@ -34,7 +40,11 @@ void LightHttpDaemon::acceptConnection()
 
     connect(socket, &QTcpSocket::readyRead, this, &LightHttpDaemon::handleClient);
     connect(socket, utils::resolve_overload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), [&]() {
-        qWarning() << "Error occured:" << socket->errorString();
+        QTcpSocket* senderSocket = qobject_cast<QTcpSocket*>(sender());
+        if (senderSocket!=nullptr)
+            qWarning() << "Error occured:" << socket->errorString();
+        else
+            qWarning() << "Error occured, socket null";
     });
 
     connect(socket, &QTcpSocket::disconnected, [&]() {
@@ -72,10 +82,18 @@ void LightHttpDaemon::handleClient()
 
         if (tokens[0] == QStringLiteral("GET")) {
             const QString &path = tokens[1];
+            QByteArray content;
+
+            const QStringList &filePaths = m_contentResolver->matches(path);
+
+            if (!filePaths.isEmpty()) {
+                content = m_contentResolver->resolve(filePaths.first());
+            }
 
             os << OK_HEADER;
-            os << CONTENT_LENGTH_HEADER.arg("0");
-            socket->close();
+            os << CONTENT_LENGTH_HEADER.arg(content.size());
+            os << content;
+
         }
     }
 }

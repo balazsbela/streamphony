@@ -1,12 +1,15 @@
 #include "lighthttpdaemon.h"
+#include "localfilecontentresolver.h"
 
 #include <QCoreApplication>
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    QCoreApplication app(argc, argv);
 
+    LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
     LightHttpDaemon daemon(8081);
+    daemon.setContentResolver(resolver);
 
-    return a.exec();
+    return app.exec();
 }

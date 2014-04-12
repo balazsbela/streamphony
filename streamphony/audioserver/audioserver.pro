@@ -19,7 +19,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    lighthttpdaemon.cpp
+    lighthttpdaemon.cpp \
+    localfilecontentresolver.cpp
 
 HEADERS += \
-    lighthttpdaemon.h
+    lighthttpdaemon.h \
+    contentresolver.h \
+    localfilecontentresolver.h
