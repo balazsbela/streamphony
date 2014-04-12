@@ -3,8 +3,11 @@
 
 #include <QTcpSocket>
 
+// HTTP Constants
 const QString OK_HEADER = QStringLiteral("HTTP/1.1 200 OK\r\n");
 const QString BAD_REQUEST = QStringLiteral("HTTP/1.1 400 Bad Request\r\n\r\n");
+const QString CONTENT_LENGTH_HEADER = QStringLiteral("Content-Length: %1 \r\n\r\n");
+
 const int MAX_PENDING_CONNECTIONS = 300; // This is sparta!
 
 
@@ -71,6 +74,7 @@ void LightHttpDaemon::handleClient()
             const QString &path = tokens[1];
 
             os << OK_HEADER;
+            os << CONTENT_LENGTH_HEADER.arg("0");
             socket->close();
         }
     }
