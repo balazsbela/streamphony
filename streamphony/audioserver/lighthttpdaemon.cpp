@@ -48,6 +48,7 @@ void LightHttpDaemon::acceptConnection()
     });
 
     connect(socket, &QTcpSocket::disconnected, [&]() {
+        qDebug() << "Disconnected!";
         QTcpSocket* senderSocket = qobject_cast<QTcpSocket*>(sender());
         if (senderSocket) {
             senderSocket->disconnect(); // all signals
@@ -71,7 +72,6 @@ void LightHttpDaemon::handleClient()
         const QStringList &tokens = QString(socket->readLine()).split(QRegExp("[ \r\n][ \r\n]*"));
 
         QTextStream os(socket);
-        os.setAutoDetectUnicode(true);
 
         if (tokens.size() < 3) {
             qWarning() << "Invalid request!";
@@ -92,8 +92,11 @@ void LightHttpDaemon::handleClient()
 
             os << OK_HEADER;
             os << CONTENT_LENGTH_HEADER.arg(content.size());
-            os << content;
 
+            os.flush();
+
+            socket->write(content);
+            socket->close();
         }
     }
 }
