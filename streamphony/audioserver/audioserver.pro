@@ -4,7 +4,10 @@
 #
 #-------------------------------------------------
 
-QT       += core
+include(../global.pri);
+include(../utils/utils.pri);
+
+QT       += core network
 
 QT       -= gui
 
@@ -15,4 +18,8 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 
-SOURCES += main.cpp
+SOURCES += main.cpp \
+    lighthttpdaemon.cpp
+
+HEADERS += \
+    lighthttpdaemon.h
