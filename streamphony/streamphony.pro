@@ -10,5 +10,6 @@ SUBDIRS +=  utils \
     mainapp \
     audioserver \
     audioplayer \
+    network
 
 
