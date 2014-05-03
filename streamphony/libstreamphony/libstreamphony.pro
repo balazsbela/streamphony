@@ -24,9 +24,9 @@ HEADERS += \
 #    INSTALLS += target
 #}
 
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../libbitdht/src/lib/release/ -lbitdht
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../libbitdht/src/lib/debug/ -lbitdht
-else:unix: LIBS += -L$$OUT_PWD/../libbitdht/src/lib -lbitdht
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../3rdparty/libbitdht/src/lib/release/ -lbitdht
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../3rdparty/libbitdht/src/lib/debug/ -lbitdht
+else:unix: LIBS += -L$$OUT_PWD/../3rdparty/libbitdht/src/lib -lbitdht
 
 INCLUDEPATH += $$PWD/../3rdparty/libbitdht/src
 DEPENDPATH += $$PWD/../3rdparty/libbitdht/src/lib
