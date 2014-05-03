@@ -10,6 +10,9 @@ SUBDIRS +=  utils \
     mainapp \
     audioserver \
     audioplayer \
-    network
+    libstreamphony \
+    network \
+    bitdhtexample \
+    3rdparty
 
 
