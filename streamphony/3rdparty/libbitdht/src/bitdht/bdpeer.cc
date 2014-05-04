@@ -767,7 +767,7 @@ int     bdSpace::add_peer(const bdId *id, uint32_t peerflags)
 
 #ifdef DEBUG_BD_SPACE
 			std::cerr << "Inserting due to Priority: minScore: " << minScore 
-				<< " new Peer Score: " << peerscore <<  << std::endl;
+                << " new Peer Score: " << std::endl;
 #endif
 		}
 		else

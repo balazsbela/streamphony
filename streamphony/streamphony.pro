@@ -12,7 +12,6 @@ SUBDIRS +=  utils \
     audioserver \
     audioplayer \
     libstreamphony \
-    network \
-    bitdhtexample
+    network
 
 

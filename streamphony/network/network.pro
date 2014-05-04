@@ -24,3 +24,9 @@ addModule(3rdparty/libbitdht, src/lib/libbitdht.a)
 
 INCLUDEPATH += $$PWD/../3rdparty/libbitdht/src/
 
+OTHER_FILES += bdboot.txt
+
+peerlist.path = $$OUT_PWD
+peerlist.files = $$PWD/bdboot.txt
+INSTALLS += peerlist
+

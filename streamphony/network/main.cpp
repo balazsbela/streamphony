@@ -14,5 +14,7 @@ int main(int argc, char *argv[])
 
     DhtManager dht(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"));
 
+    dht.discoverRandomPeers();
+
     return a.exec();
 }

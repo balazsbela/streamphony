@@ -14,11 +14,13 @@ TEMPLATE = lib
 CONFIG += staticlib bitdht
 
 SOURCES += \
-    dht/dhtmanager.cpp
+    dht/dhtmanager.cpp \
+    dht/dhtcallbacks.cpp
 
 HEADERS += \
     dht/dhtmanager.h \
-    dht/dhtdebug.h
+    dht/dhtdebug.h \
+    dht/dhtcallbacks.h
 
 #unix {
 #    target.path = /usr/lib

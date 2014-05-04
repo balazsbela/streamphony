@@ -20,11 +20,16 @@ public:
     void restart();
     bool isEnabled();
     bool isActive();
+    void discoverRandomPeers();
+
+    bool FindNode(bdNodeId *peerId);
+    bool DropNode(bdNodeId *peerId);
 
 private:
     /* real DHT classes */
-    QScopedPointer<UdpStack> mStack;
-    QScopedPointer<UdpBitDht> mUdpBitDht;
+    QScopedPointer<UdpStack> m_stack;
+    QScopedPointer<UdpBitDht> m_udpBitDht;
+    QScopedPointer<bdSpace> m_bdSpace;
 };
 
 #endif // DHTMANAGER_H

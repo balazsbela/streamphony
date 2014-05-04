@@ -3,6 +3,8 @@
 
 #include <QDebug>
 
+#define DEBUG_DHT
+
 #ifdef DEBUG_DHT
     #define debugDht qDebug
 #else
