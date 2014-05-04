@@ -23,6 +23,8 @@
  *
  */
 
+#include <unistd.h>
+
 #include "bitdht/bdpeer.h"
 #include "bitdht/bdstddht.h"
 #include "bitdht/bdquery.h"
@@ -56,7 +58,7 @@ int main(int argc, char **argv)
 
 	node.printState();
 
-#if 0
+
 	for(i = 0; i < N_QUERIES; i++)
 	{
 		/* create a query */
@@ -65,7 +67,6 @@ int main(int argc, char **argv)
 
 		node.addQuery(&queryId, 0);
 	}
-#endif
 
 	node.printState();
 

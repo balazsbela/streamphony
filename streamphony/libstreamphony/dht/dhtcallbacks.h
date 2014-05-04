@@ -13,22 +13,11 @@ class DhtCallbacks : public BitDhtCallback
 {
 public:
     DhtCallbacks(DhtManager *parent);
-    virtual ~DhtCallbacks();
+    virtual ~DhtCallbacks();   
 
-    // dummy
-    virtual int dhtNodeCallback(const bdId *  /*id*/, uint32_t /*peerflags*/) override;
-
-    // must be implemented.
-    virtual int dhtPeerCallback(const bdId *id, uint32_t status) override;
+    virtual int dhtNodeCallback(const bdId *node, uint32_t peerflags) override;
+    virtual int dhtPeerCallback(const bdNodeId *id, uint32_t status) override;
     virtual int dhtValueCallback(const bdNodeId *id, std::string key, uint32_t status) override;
-
-    // connection callback. Not required for basic behaviour, but forced for initial development.
-    virtual int dhtConnectCallback(const bdId *srcId, const bdId *proxyId, const bdId *destId,
-                                   uint32_t mode, uint32_t point, uint32_t param, uint32_t cbtype,
-                                   uint32_t errcode) override;
-
-    // generic Info callback - initially will be used to provide bad peers.
-    virtual int dhtInfoCallback(const bdId *id, uint32_t type, uint32_t flags, std::string info) override;
 
 private:
     QPointer<DhtManager> m_parent;

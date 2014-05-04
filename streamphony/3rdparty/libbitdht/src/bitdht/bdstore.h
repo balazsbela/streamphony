@@ -38,7 +38,6 @@ class bdStore
 	bdStore(std::string file, bdDhtFunctions *fns);
 
 int 	reloadFromStore(); /* for restarts */
-int	filterIpList(const std::list<struct sockaddr_in> &filteredIPs);
 int 	clear();
 
 int 	getPeer(bdPeer *peer);

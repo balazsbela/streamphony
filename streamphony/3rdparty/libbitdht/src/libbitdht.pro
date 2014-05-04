@@ -1,12 +1,8 @@
-#LibBitDHT pro file, taken from RetroShare
-
 TEMPLATE = lib
-CONFIG += staticlib
+CONFIG += staticlib release
 CONFIG -= qt
 TARGET = bitdht
-#QMAKE_CXXFLAGS *= -Wall -DBE_DEBUG
-
-DEFINES+=DEBUG_BD_SPACE
+QMAKE_CXXFLAGS *= -Wall -DBE_DEBUG
 
 profiling {
 	QMAKE_CXXFLAGS -= -fomit-frame-pointer
@@ -19,17 +15,9 @@ release {
 
 #CONFIG += debug
 debug {
-#        QMAKE_CXXFLAGS -= -O2 -fomit-frame-pointer
-#        QMAKE_CXXFLAGS *= -g -fno-omit-frame-pointer
-
-        # The warnings are spammy and it's not like we're going to rewrite this lib.
-        QMAKE_CXXFLAGS += -w
-
+        QMAKE_CXXFLAGS -= -O2 -fomit-frame-pointer
+        QMAKE_CXXFLAGS *= -g -fno-omit-frame-pointer
 }
-
-# treat warnings as error for better removing
-#QMAKE_CFLAGS += -Werror
-#QMAKE_CXXFLAGS += -Werror
 
 ################################# Linux ##########################################
 linux-* {
@@ -66,24 +54,10 @@ win32 {
 		QMAKE_CC = g++
 		OBJECTS_DIR = temp/obj
 		MOC_DIR = temp/moc
-		DEFINES *= STATICLIB WIN32_LEAN_AND_MEAN _USE_32BIT_TIME_T
+		DEFINES *= STATICLIB 
 		# These have been replaced by _WIN32 && __MINGW32__
 		#DEFINES *= WINDOWS_SYS WIN32 STATICLIB MINGW
 		DESTDIR = lib
-
-		# Switch on extra warnings
-		QMAKE_CFLAGS += -Wextra
-		QMAKE_CXXFLAGS += -Wextra
-
-		# Switch off optimization for release version
-		QMAKE_CXXFLAGS_RELEASE -= -O2
-		QMAKE_CXXFLAGS_RELEASE += -O0
-		QMAKE_CFLAGS_RELEASE -= -O2
-		QMAKE_CFLAGS_RELEASE += -O0
-
-		# Switch on optimization for debug version
-		#QMAKE_CXXFLAGS_DEBUG += -O2
-		#QMAKE_CFLAGS_DEBUG += -O2
 }
 
 ################################# MacOSX ##########################################
@@ -92,18 +66,6 @@ mac {
 		QMAKE_CC = g++
 		OBJECTS_DIR = temp/obj
 		MOC_DIR = temp/moc
-		DESTDIR = lib
-}
-
-################################# FreeBSD ##########################################
-
-freebsd-* {
-		DESTDIR = lib
-}
-
-################################# OpenBSD ##########################################
-
-openbsd-* {
 		DESTDIR = lib
 }
 
@@ -128,18 +90,9 @@ HEADERS += \
 	bitdht/bdhistory.h	\
 	util/bdnet.h	\
 	util/bdthreads.h	\
-	util/bdrandom.h		\
-	util/bdfile.h		\
-	util/bdstring.h		\
 	udp/udplayer.h   	\
 	udp/udpstack.h		\
 	udp/udpbitdht.h   	\
-	bitdht/bdconnection.h	\
-	bitdht/bdfilter.h	\
-	bitdht/bdaccount.h	\
-	bitdht/bdquerymgr.h	\
-	util/bdbloom.h		\
-	bitdht/bdfriendlist.h	\
 
 SOURCES += \
 	bitdht/bencode.c	\
@@ -153,21 +106,10 @@ SOURCES += \
 	bitdht/bdmanager.cc	\
 	bitdht/bdstddht.cc	\
 	bitdht/bdhistory.cc	\
-	util/bdnet.cc 	 	\
+	util/bdnet.cc  	\
 	util/bdthreads.cc  	\
-	util/bdrandom.cc  	\
-	util/bdfile.cc		\
-	util/bdstring.cc	\
 	udp/udplayer.cc		\
 	udp/udpstack.cc		\
 	udp/udpbitdht.cc  	\
-	bitdht/bdconnection.cc	\
-	bitdht/bdfilter.cc	\
-	bitdht/bdaccount.cc	\
-	bitdht/bdquerymgr.cc	\
-	util/bdbloom.cc		\
-	bitdht/bdfriendlist.cc	\
 
-peerlist.path = $$OUT_PWD
-peerlist.files = $$PWD/*.a
-INSTALLS += peerlist
+

@@ -22,7 +22,6 @@
 #include <stdio.h>
 #include <stdlib.h> /* malloc() realloc() free() strtoll() */
 #include <string.h> /* memset() */
-#include "util/bdstring.h"
 
 #include "bitdht/bencode.h"
 
@@ -209,10 +208,7 @@ static be_node *_be_decode(const char **data, long long *data_len)
 #ifdef BE_DEBUG_DECODE 
 			fprintf(stderr, "bencode::_be_decode() dictionary get val\n");
 #endif
-				ret->val.d[i  ].val = _be_decode(data, data_len);
-				ret->val.d[i+1].val = NULL ; // ensures termination of loops based on 0x0 value, otherwise, uninitialized 
-													  // memory occurs if(ret->val.d[i].key == 0x0 && ret->val.d[i].val != NULL)
-													  // when calling be_free 8 lines below this point...
+				ret->val.d[i].val = _be_decode(data, data_len);
 
 				if ((ret->val.d[i].key == NULL) || (ret->val.d[i].val == NULL))
 				{
@@ -429,7 +425,7 @@ int be_encode(be_node *node, char *str, int len)
 
 	switch (node->type) {
 		case BE_STR:
-			bd_snprintf(str, len, "%lli:", be_str_len(node));
+			snprintf(str, len, "%lli:", be_str_len(node));
 			loc += strlen(&(str[loc]));
 
 			memcpy(&(str[loc]), node->val.s, be_str_len(node));
@@ -437,7 +433,7 @@ int be_encode(be_node *node, char *str, int len)
 			break;
 
 		case BE_INT:
-			bd_snprintf(str, len, "i%llie", node->val.i);
+			snprintf(str, len, "i%llie", node->val.i);
 			loc += strlen(&(str[loc]));
 			break;
 

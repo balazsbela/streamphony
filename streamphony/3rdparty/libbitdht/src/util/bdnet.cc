@@ -25,7 +25,6 @@
  */
 
 #include "bdnet.h"
-#include "bdstring.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -257,11 +256,7 @@ int bdnet_w2u_errno(int err)
 			break;
 		 *
 		 ***/
-	
-		case WSANOTINITIALISED:	
-			std::cerr << "tou_net_w2u_errno(" << err << ") WSANOTINITIALISED. Fix Your Code!";
-			std::cerr << std::endl;
-			break;
+		
 		default:
 			std::cerr << "tou_net_w2u_errno(" << err << ") Unknown";
 			std::cerr << std::endl;
@@ -276,13 +271,13 @@ int bdnet_inet_aton(const char *name, struct in_addr *addr)
         return (((*addr).s_addr = inet_addr(name)) != INADDR_NONE);
 }
 
-#ifndef __MINGW64_VERSION_MAJOR
+
+
 int sleep(unsigned int sec)
 { 
 	Sleep(sec * 1000); 
 	return 0;
 }
-#endif
 
 int usleep(unsigned int usec)
 { 
@@ -351,18 +346,3 @@ ssize_t bdnet_sendto(int s, const void *buf, size_t len, int flags,
 #endif
 /********************************** WINDOWS/UNIX SPECIFIC PART ******************/
 
-
-void    bdsockaddr_clear(struct sockaddr_in *addr)
-{
-	memset(addr, 0, sizeof(*addr));
-}
-
-/* thread-safe version of inet_ntoa */
-
-std::string bdnet_inet_ntoa(struct in_addr in)
-{
-	std::string str;
-	uint8_t *bytes = (uint8_t *) &(in.s_addr);
-	bd_sprintf(str, "%u.%u.%u.%u", (int) bytes[0], (int) bytes[1], (int) bytes[2], (int) bytes[3]);
-	return str;
-}

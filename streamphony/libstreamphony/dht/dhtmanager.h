@@ -7,6 +7,7 @@
 
 #include <QObject>
 #include <QScopedPointer>
+#include <QTimer>
 
 class DhtManager : public QObject
 {
@@ -30,6 +31,8 @@ private:
     QScopedPointer<UdpStack> m_stack;
     QScopedPointer<UdpBitDht> m_udpBitDht;
     QScopedPointer<bdSpace> m_bdSpace;
+    QTimer m_peerDiscoveryTimer;
+
 };
 
 #endif // DHTMANAGER_H

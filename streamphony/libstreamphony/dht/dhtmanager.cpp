@@ -8,6 +8,9 @@
 #include <string.h>
 #include <unistd.h>
 
+static const int PEER_DISCOVERY_TIMEOUT = 180000; //msecs
+static const int RANDOM_PEER_LIMIT = 13;
+
 DhtManager::DhtManager(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapFile, QObject *parent)
     : QObject(parent)
 {   
@@ -106,17 +109,16 @@ bool DhtManager::DropNode(bdNodeId *peerId)
 
 void DhtManager::discoverRandomPeers()
 {
-    while(1)
-    {
+    m_peerDiscoveryTimer.setInterval(PEER_DISCOVERY_TIMEOUT);
+   connect(&m_peerDiscoveryTimer, &QTimer::timeout, [this]() {
         bdNodeId searchId;
         bdStdRandomNodeId(&searchId);
-
         FindNode(&searchId);
+    });
 
-        sleep(180);
-
-        DropNode(&searchId);
-    }
+    utils::singleShotTimer(RANDOM_PEER_LIMIT * PEER_DISCOVERY_TIMEOUT, [this]() {
+        m_peerDiscoveryTimer.stop();
+    }, this);
 }
 
 DhtManager::~DhtManager()

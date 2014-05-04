@@ -8,7 +8,6 @@ int main(int argc, char *argv[])
 
     /* startup dht : with a random id! */
     bdNodeId ownId;
-    bdStdRandomNodeId(&ownId);
 
     uint16_t port = 6775;
 

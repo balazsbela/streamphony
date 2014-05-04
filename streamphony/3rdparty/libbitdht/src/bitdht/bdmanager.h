@@ -53,9 +53,8 @@
 #define BITDHT_PS_STATE_ONLINE		(0x00000400)
 #define BITDHT_PS_STATE_CONNECTED	(0x00000800)
 
-#include "bitdht/bdiface.h"
-#include "bitdht/bdnode.h"
-#include "util/bdbloom.h"
+#include "bdiface.h"
+#include "bdnode.h"
 
 
 
@@ -65,10 +64,9 @@ class bdQueryPeer
 	bdId mId;
 	uint32_t mStatus;
 	uint32_t mQFlags;
-	//time_t mLastQuery;
-	//time_t mLastFound;
+	time_t mLastQuery;
+	time_t mLastFound;
 	struct sockaddr_in mDhtAddr;
-	time_t mCallbackTS;   // for UPDATES flag.
 };
 
 
@@ -102,12 +100,6 @@ class bdNodeManager: public bdNode, public BitDhtInterface
 void 	iteration();
 
         /***** Functions to Call down to bdNodeManager ****/
-
-
-        /* Friend Tracking */
-virtual void addBadPeer(const struct sockaddr_in &addr, uint32_t source, uint32_t reason, uint32_t age);
-virtual void updateKnownPeer(const bdId *id, uint32_t type, uint32_t flags);
-
         /* Request DHT Peer Lookup */
         /* Request Keyword Lookup */
 virtual void addFindNode(bdNodeId *id, uint32_t mode);
@@ -121,18 +113,6 @@ virtual void removeCallback(BitDhtCallback *cb);
         /***** Get Results Details *****/
 virtual int getDhtPeerAddress(const bdNodeId *id, struct sockaddr_in &from);
 virtual int getDhtValue(const bdNodeId *id, std::string key, std::string &value);
-virtual int getDhtBucket(const int idx, bdBucket &bucket);
-
-virtual int getDhtQueries(std::map<bdNodeId, bdQueryStatus> &queries);
-virtual int getDhtQueryStatus(const bdNodeId *id, bdQuerySummary &query);
-
-	/***** Connection Interface ****/
-virtual bool ConnectionRequest(struct sockaddr_in *laddr, bdNodeId *target, uint32_t mode, uint32_t delay, uint32_t start);
-virtual void ConnectionAuth(bdId *srcId, bdId *proxyId, bdId *destId, 
-						uint32_t mode, uint32_t loc, uint32_t bandwidth, uint32_t delay, uint32_t answer);
-virtual void ConnectionOptions(uint32_t allowedModes, uint32_t flags);
-
-virtual bool setAttachMode(bool on);
 
 	/* stats and Dht state */
 virtual int startDht();
@@ -140,35 +120,25 @@ virtual int stopDht();
 virtual int stateDht(); /* STOPPED, STARTING, ACTIVE, FAILED */
 virtual uint32_t statsNetworkSize();
 virtual uint32_t statsBDVersionSize(); /* same version as us! */
-
-virtual uint32_t setDhtMode(uint32_t dhtFlags);
-
         /******************* Internals *************************/
 
 	// Overloaded from bdnode for external node callback.
 virtual void addPeer(const bdId *id, uint32_t peerflags);
-        // Overloaded from bdnode for external node callback.
-virtual void callbackConnect(bdId *srcId, bdId *proxyId, bdId *destId,
-                                        int mode, int point, int param, int cbtype, int errcode); 
+
 
 int 	isBitDhtPacket(char *data, int size, struct sockaddr_in &from);
 	private:
 
 
 void 	doNodeCallback(const bdId *id, uint32_t peerflags);
-void 	doPeerCallback(const bdId *id, uint32_t status);
+void 	doPeerCallback(const bdNodeId *id, uint32_t status);
 void 	doValueCallback(const bdNodeId *id, std::string key, uint32_t status);
-void    doInfoCallback(const bdId *id, uint32_t type, uint32_t flags, std::string info);
 
 int	status();
 int	checkStatus();
 int 	checkPingStatus();
-int	checkBadPeerStatus();
 int 	SearchOutOfDate();
 void	startQueries();
-
-int     QueryRandomLocalNet();
-void    SearchForLocalNet();
 
 	std::map<bdNodeId, bdQueryPeer>	mActivePeers;
         std::list<BitDhtCallback *> mCallbacks;
@@ -176,18 +146,10 @@ void    SearchForLocalNet();
 	uint32_t mMode;
 	time_t   mModeTS;
 
-        time_t mStartTS;
-        time_t mSearchTS;
-        bool mSearchingDone;
-
         bdDhtFunctions *mFns;
 
 	uint32_t mNetworkSize;
 	uint32_t mBdNetworkSize;
-
-	bdBloom mBloomFilter;
-
-        bool mLocalNetEnhancements;
 
 	/* future node functions */
 	//addPeerPing(foundId);
@@ -199,11 +161,8 @@ class bdDebugCallback: public BitDhtCallback
 {
         public:
         ~bdDebugCallback();
-virtual int dhtPeerCallback(const bdId *id, uint32_t status);
+virtual int dhtPeerCallback(const bdNodeId *id, uint32_t status);
 virtual int dhtValueCallback(const bdNodeId *id, std::string key, uint32_t status);
-virtual int dhtConnectCallback(const bdId *srcId, const bdId *proxyId, const bdId *destId,             
-                         uint32_t mode, uint32_t point, uint32_t param, uint32_t cbtype, uint32_t errcode);
-virtual int dhtInfoCallback(const bdId *id, uint32_t type, uint32_t flags, std::string info);
 
 };
 

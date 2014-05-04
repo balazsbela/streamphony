@@ -23,10 +23,9 @@
  *
  */
 
-
+#include <unistd.h>
 #include "bitdht/bdnode.h"
 #include "bitdht/bdstddht.h"
-#include "util/bdrandom.h"
 
 #include <stdlib.h>
 
@@ -88,10 +87,10 @@ int main(int argc, char **argv)
 
 		for(j = 0; j < 5; j++)
 		{		
-			int peeridx = bdRandom::random_u32() % n_nodes;
+			int peeridx = rand() % n_nodes;
 
 			bdId pid = portIdx[peeridx];
-			node->addPotentialPeer(&pid, NULL);
+			node->addPotentialPeer(&pid);
 		}
 	}
 

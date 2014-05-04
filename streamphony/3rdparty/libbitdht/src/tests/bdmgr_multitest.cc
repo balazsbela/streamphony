@@ -23,11 +23,11 @@
  *
  */
 
+#include <unistd.h>
 
 #include "bitdht/bdmanager.h"
 #include "bitdht/bdstddht.h"
 #include "udp/udplayer.h"
-#include "util/bdrandom.h"
 
 #include <stdlib.h>
 
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	{
 		for(j = 0; j < 2; j++)
 		{
-			int peeridx = bdRandom::random_u32() % n_nodes;
+			int peeridx = rand() % n_nodes;
 			for(i = 0, it = nodes.begin(); 
 				(i < peeridx) && (it != nodes.end()); i++, it++)
 			{
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 			}
 			if (it != nodes.end())
 			{
-				nit->second->addPotentialPeer((bdId *) &(it->first), NULL);
+				nit->second->addPotentialPeer((bdId *) &(it->first));
 			}
 		}
 	}

@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 	std::multimap<bdMetric, bdId> nearest;
 	std::multimap<bdMetric, bdId>::iterator it;
 
-	space.find_nearest_nodes(&(queryId.id), N_PEERS_TO_START, nearest);
+	space.find_nearest_nodes(&(queryId.id), N_PEERS_TO_START, startList, nearest);
 
 	for(it = nearest.begin(); it != nearest.end(); it++)
 	{

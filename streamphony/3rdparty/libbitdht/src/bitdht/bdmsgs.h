@@ -45,20 +45,6 @@
 #define BITDHT_MSG_TYPE_POST_HASH       8
 #define BITDHT_MSG_TYPE_REPLY_POST      9
 
-
-
-// THESE ARE EXTENSIONS
-#define BITDHT_MSG_TYPE_CONNECT     	20
-
-// CONNECTIONS.
-#define BITDHT_MSG_TYPE_CONNECT_REQUEST     	101
-#define BITDHT_MSG_TYPE_CONNECT_REPLY     	102
-#define BITDHT_MSG_TYPE_CONNECT_START     	103
-#define BITDHT_MSG_TYPE_CONNECT_ACK     	104
-
-// FANCY HASHES.
-
-
 #define BITDHT_COMPACTNODEID_LEN 	26
 #define BITDHT_COMPACTPEERID_LEN 	6
 
@@ -92,10 +78,6 @@ int bitdht_reply_announce_msg(bdToken *tid, bdNodeId *id,
                                         char *msg, int avail);
 
 
-// Extensions.
-int bitdht_connect_genmsg(bdToken *tid, bdNodeId *id, int msgtype, bdId *src, bdId *dest, int mode, int param, int status, char *msg, int avail);
-
-
 //int response_peers_message()
 //int response_closestnodes_message()
 
@@ -103,8 +85,6 @@ be_node *beMsgGetDictNode(be_node *node, const char *key);
 int beMsgMatchString(be_node *n, const char *str, int len);
 uint32_t beMsgGetY(be_node *n);
 uint32_t beMsgType(be_node *n);
-
-bool bitdht_msgtype(uint32_t msg_type, std::string &name);
 
 
 uint32_t convertBdVersionToVID(bdVersion *version);
@@ -114,7 +94,6 @@ be_node *makeCompactNodeIdString(std::list<bdId> &nodes);
 
 int beMsgGetToken(be_node *n, bdToken &token);
 int beMsgGetNodeId(be_node *n, bdNodeId &nodeId);
-int beMsgGetBdId(be_node *n, bdId &id);
 int beMsgGetListBdIds(be_node *n, std::list<bdId> &nodes);
 
 int beMsgGetListStrings(be_node *n, std::list<std::string> &values);

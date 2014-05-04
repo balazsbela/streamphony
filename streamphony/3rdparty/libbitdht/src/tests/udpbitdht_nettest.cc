@@ -24,6 +24,8 @@
  */
 
 
+#include <unistd.h>
+#include <getopt.h>
 #include "udp/udpbitdht.h"
 #include "udp/udpstack.h"
 #include "bitdht/bdstddht.h"
@@ -71,6 +73,8 @@ int main(int argc, char **argv)
 	bool doRestart = false;
 	bool doThreadJoin = false;
 	int noQueries = 0;
+
+	srand(time(NULL));
 
 	while((c = getopt(argc, argv,"rjp:b:u:q:")) != -1)
 	{

@@ -56,9 +56,10 @@ int main(int argc, char **argv)
 	{
 		bdId tmpId;
 		bdStdRandomId(&tmpId);
+		std::list<bdId> list1;
 		std::multimap<bdMetric, bdId> list2;
 
-		space.find_nearest_nodes(&(tmpId.id), N_PEERS_TO_FIND, list2);
+		space.find_nearest_nodes(&(tmpId.id), N_PEERS_TO_FIND, list1, list2);
 	}
 
 	return 1;

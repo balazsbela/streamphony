@@ -2,15 +2,15 @@
 CXXFLAGS = -Wall -g -I.. 
 #CXXFLAGS += -arch i386 # OSX
 
-LIBS = -L../lib -lbitdht -lpthread
+LIBS = -L../lib -lbitdht
 
 
 
-EXEC : bssdht
+EXEC : bdexample
 
-EGOBJ = bdhandler.o bssdht.o bootstrap_fn.o
+EGOBJ = bdhandler.o bdexample.o
 
-bssdht: $(EGOBJ)
-	$(CXX) $(CXXFLAGS) -o bssdht $(EGOBJ) $(LIBS)
+bdexample: $(EGOBJ)
+	$(CXX) $(CXXFLAGS)  -o bdexample $(EGOBJ) $(LIBS) -pthread
 
 
