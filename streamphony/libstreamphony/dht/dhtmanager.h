@@ -1,19 +1,30 @@
 #ifndef DHTMANAGER_H
 #define DHTMANAGER_H
 
+#include "udp/udpstack.h"
+#include "udp/udpbitdht.h"
+#include "bitdht/bdiface.h"
+
 #include <QObject>
+#include <QScopedPointer>
 
 class DhtManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit DhtManager(QObject *parent = 0);
+    DhtManager(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapfile, QObject *parent = 0);
     ~DhtManager() override;
 
-signals:
+    void enable(bool on);
+    void shutdown(); /* blocking call */
+    void restart();
+    bool isEnabled();
+    bool isActive();
 
-public slots:
-
+private:
+    /* real DHT classes */
+    QScopedPointer<UdpStack> mStack;
+    QScopedPointer<UdpBitDht> mUdpBitDht;
 };
 
 #endif // DHTMANAGER_H

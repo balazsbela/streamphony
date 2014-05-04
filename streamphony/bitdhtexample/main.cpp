@@ -4,6 +4,7 @@
 #include "bitdht/bdiface.h"
 #include "bitdht/bdstddht.h"
 #include "bdhandler.h"
+#include "bitdht/bdpeer.h"
 
 int main(int argc, char **argv)
 {

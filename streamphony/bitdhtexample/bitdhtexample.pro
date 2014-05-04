@@ -20,6 +20,7 @@ peerlist.path = $$OUT_PWD
 peerlist.files = $$PWD/bdboot.txt
 INSTALLS += peerlist
 
+DEFINES += DEBUG_BITDHT
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../3rdparty/libbitdht/src/lib/release/ -lbitdht
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../3rdparty/libbitdht/src/lib/debug/ -lbitdht

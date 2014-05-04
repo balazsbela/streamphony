@@ -58,7 +58,7 @@ class BitDhtHandler
     virtual int 	PeerCallback(const bdNodeId *id, uint32_t status);
     virtual int 	ValueCallback(const bdNodeId *id, std::string key, uint32_t status);
 
-	private:
+    public:
 
 	/* real DHT classes */
 	UdpStack *mStack;

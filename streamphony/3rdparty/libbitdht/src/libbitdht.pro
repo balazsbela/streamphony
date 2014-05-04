@@ -4,7 +4,7 @@ TEMPLATE = lib
 CONFIG += staticlib
 CONFIG -= qt
 TARGET = bitdht
-QMAKE_CXXFLAGS *= -Wall -DBE_DEBUG
+#QMAKE_CXXFLAGS *= -Wall -DBE_DEBUG
 
 profiling {
 	QMAKE_CXXFLAGS -= -fomit-frame-pointer

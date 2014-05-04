@@ -7,12 +7,12 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 SUBDIRS +=  utils \
+    3rdparty \
     mainapp \
     audioserver \
     audioplayer \
     libstreamphony \
     network \
-    bitdhtexample \
-    3rdparty
+    bitdhtexample
 
 
