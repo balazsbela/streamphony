@@ -159,7 +159,9 @@ void bdNodeManager::addFindNode(bdNodeId *id, uint32_t qflags)
 	std::cerr << "bdNodeManager::addFindNode() Added QueryPeer as READY....";
 	std::cerr << std::endl;
 #endif
-	//addQuery(id, qflags | BITDHT_QFLAGS_DISGUISE); 
+    addQuery(id, qflags | BITDHT_QFLAGS_DISGUISE);
+    startQueries();
+
 	return;
 }
 

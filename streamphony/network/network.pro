@@ -5,6 +5,7 @@
 #-------------------------------------------------
 
 include(../global.pri);
+include(../utils/utils.pri);
 
 QT       += core network
 

@@ -4,6 +4,8 @@ CONFIG -= qt
 TARGET = bitdht
 QMAKE_CXXFLAGS *= -Wall -DBE_DEBUG
 
+DEFINES += DEBUG_MGR
+
 profiling {
 	QMAKE_CXXFLAGS -= -fomit-frame-pointer
 	QMAKE_CXXFLAGS *= -pg -g -fno-omit-frame-pointer

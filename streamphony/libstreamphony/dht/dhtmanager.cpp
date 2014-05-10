@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <memory>
 
 static const int PEER_DISCOVERY_TIMEOUT = 180000; //msecs
 static const int RANDOM_PEER_LIMIT = 13;
@@ -48,7 +49,10 @@ DhtManager::DhtManager(bdNodeId *ownId, uint16_t port, const QString &appId, con
     utils::singleShotTimer(15000, [&]() {
         qDebug() << m_udpBitDht->statsNetworkSize();
     }, nullptr);
+}
 
+DhtManager::~DhtManager()
+{
 }
 
 void DhtManager::enable(bool on)
@@ -83,7 +87,7 @@ bool DhtManager::isActive()
     return m_udpBitDht->stateDht() >= BITDHT_MGR_STATE_ACTIVE;
 }
 
-bool DhtManager::FindNode(bdNodeId *peerId)
+bool DhtManager::findNode(bdNodeId *peerId)
 {
     std::cerr << "BitDhtHandler::FindNode(";
     bdStdPrintNodeId(std::cerr, peerId);
@@ -91,36 +95,36 @@ bool DhtManager::FindNode(bdNodeId *peerId)
 
     m_udpBitDht->addFindNode(peerId, BITDHT_QFLAGS_DO_IDLE);
 
-    return true ;
+    auto poll = [this, peerId]() {
+        struct sockaddr_in peerAddr;
+        if (m_udpBitDht->getDhtPeerAddress(peerId, peerAddr)) {
+            std::cout << "FOUND PEER:" << endl;
+            std::cout << inet_ntoa(peerAddr.sin_addr) << ":" << htons(peerAddr.sin_port) << endl;
+            m_pollTimer.stop();
+        } else {
+            std::cout << "Couldn't find peer yet" << endl;
+        }
+    };
+
+    QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
+
+    m_pollTimer.setInterval(10000);
+    connect(&m_pollTimer, &QTimer::timeout, [=]() {
+        (*callback)();
+    });
+
+    m_pollTimer.start();
+
+    return true;
 }
 
-bool DhtManager::DropNode(bdNodeId *peerId)
+bool DhtManager::dropNode(bdNodeId *peerId)
 {
     std::cerr << "BitDhtHandler::DropNode(";
     bdStdPrintNodeId(std::cerr, peerId);
     std::cerr << ")" << std::endl;
     std::cerr << std::endl;
 
-    /* remove in peer */
     m_udpBitDht->removeFindNode(peerId);
-
     return true ;
-}
-
-void DhtManager::discoverRandomPeers()
-{
-    m_peerDiscoveryTimer.setInterval(PEER_DISCOVERY_TIMEOUT);
-   connect(&m_peerDiscoveryTimer, &QTimer::timeout, [this]() {
-        bdNodeId searchId;
-        bdStdRandomNodeId(&searchId);
-        FindNode(&searchId);
-    });
-
-    utils::singleShotTimer(RANDOM_PEER_LIMIT * PEER_DISCOVERY_TIMEOUT, [this]() {
-        m_peerDiscoveryTimer.stop();
-    }, this);
-}
-
-DhtManager::~DhtManager()
-{
 }

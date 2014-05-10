@@ -43,6 +43,8 @@
 
 
 void bdStdRandomNodeId(bdNodeId *id);
+void bdStdNodeIdFromArray(bdNodeId *id, const char* string);
+
 void bdStdZeroNodeId(bdNodeId *id);
 
 void bdStdRandomId(bdId *id);

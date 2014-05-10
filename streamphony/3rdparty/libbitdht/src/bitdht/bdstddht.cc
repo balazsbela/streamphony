@@ -49,6 +49,16 @@ void bdStdRandomId(bdId *id)
 	return;
 }
 
+void bdStdNodeIdFromArray(bdNodeId *id, const char* string)
+{
+    uint8_t *a_data = (uint8_t *) id->data;
+    for(int i = 0; i < BITDHT_KEY_LEN; i++)
+    {
+        a_data[i] = string[i];
+    }
+    return;
+}
+
 void bdStdRandomNodeId(bdNodeId *id)
 {
 	uint32_t *a_data = (uint32_t *) id->data;
@@ -62,7 +72,7 @@ void bdStdRandomNodeId(bdNodeId *id)
 void bdStdZeroNodeId(bdNodeId *id)
 {
 	uint32_t *a_data = (uint32_t *) id->data;
-	for(int i = 0; i < BITDHT_KEY_INTLEN; i++)
+    for(int i = 0; i < BITDHT_KEY_INTLEN; i++)
 	{
 		a_data[i] = 0;
 	}
