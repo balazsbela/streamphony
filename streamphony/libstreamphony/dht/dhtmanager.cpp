@@ -98,11 +98,11 @@ bool DhtManager::findNode(bdNodeId *peerId)
     auto poll = [this, peerId]() {
         struct sockaddr_in peerAddr;
         if (m_udpBitDht->getDhtPeerAddress(peerId, peerAddr)) {
-            std::cout << "FOUND PEER:" << endl;
-            std::cout << inet_ntoa(peerAddr.sin_addr) << ":" << htons(peerAddr.sin_port) << endl;
+            qDebug() << "FOUND PEER:" << endl;
+            qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << htons(peerAddr.sin_port) << endl;
             m_pollTimer.stop();
         } else {
-            std::cout << "Couldn't find peer yet" << endl;
+            qDebug() << endl << endl << "Couldn't find peer yet!" << endl;
         }
     };
 
