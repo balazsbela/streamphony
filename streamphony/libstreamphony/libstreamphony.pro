@@ -9,24 +9,28 @@ include(../utils/utils.pri);
 
 QT       -= gui
 
+QT += network xml
+
 TARGET = streamphony
 TEMPLATE = lib
 CONFIG += staticlib bitdht
 
 SOURCES += \
     dht/dhtmanager.cpp \
-    dht/dhtcallbacks.cpp
+    dht/dhtcallbacks.cpp \
+    xmpp/xmppmanager.cpp
 
 HEADERS += \
     dht/dhtmanager.h \
     dht/dhtdebug.h \
-    dht/dhtcallbacks.h
+    dht/dhtcallbacks.h \
+    xmpp/xmppmanager.h
 
 #unix {
 #    target.path = /usr/lib
 #    INSTALLS += target
 #}
 
-addModule(3rdparty/libbitdht, src/lib/libbitdht.a)
+include(modules.pri);
 
-INCLUDEPATH += $$PWD/../3rdparty/libbitdht/src/
+

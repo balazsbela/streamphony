@@ -1,4 +1,6 @@
 #include "dht/dhtmanager.h"
+#include "xmpp/xmppmanager.h"
+
 #include "singleshottimer.h"
 
 #include <QCoreApplication>
@@ -8,6 +10,8 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+
+    XmppManager xmppManager;
 
     QCryptographicHash hash(QCryptographicHash::Sha1);
     hash.addData("balazsbela@gmail.com");

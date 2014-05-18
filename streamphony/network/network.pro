@@ -7,7 +7,7 @@
 include(../global.pri);
 include(../utils/utils.pri);
 
-QT       += core network
+QT       += core network xml
 
 QT       -= gui
 
@@ -21,9 +21,7 @@ TEMPLATE = app
 SOURCES += main.cpp
 
 addModule(libstreamphony, libstreamphony.a)
-addModule(3rdparty/libbitdht, src/lib/libbitdht.a)
-
-INCLUDEPATH += $$PWD/../3rdparty/libbitdht/src/
+include(../libstreamphony/modules.pri);
 
 OTHER_FILES += bdboot.txt
 
