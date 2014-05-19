@@ -14,8 +14,10 @@ int main(int argc, char *argv[])
 
     SettingsManager settingsManager(&app);
     SettingsManager::instance()->setEmail(QStringLiteral("balazsbela@gmail.com"));
+    SettingsManager::instance()->setXmppUsername(QStringLiteral("balazsbela1"));
 
     XmppManager xmppManager(&app);
+    xmppManager.signIn();
 
     QCryptographicHash hash(QCryptographicHash::Sha1);
     hash.addData(SettingsManager::instance()->email().toStdString().c_str());

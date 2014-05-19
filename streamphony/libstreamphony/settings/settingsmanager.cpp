@@ -10,6 +10,7 @@ static const QString SETTINGS_FILE = QStringLiteral("/settings.ini");
 //Keys
 static const QString EMAIL_KEY = "email";
 static const QString PASSWORD_KEY = "password";
+static const QString XMPP_USERNAME_KEY = "xmppUsername";
 
 //Debug
 
@@ -68,5 +69,18 @@ void SettingsManager::setPassword(const QString &newPassword)
     if (newPassword != password()) {
         m_settings->setValue(PASSWORD_KEY, newPassword);
         emit passwordChanged(newPassword);
+    }
+}
+
+QString SettingsManager::xmppUsername() const
+{
+    return m_settings->value(XMPP_USERNAME_KEY, {}).toString();
+}
+
+void SettingsManager::setXmppUsername(const QString &newXmppUsername)
+{
+    if (newXmppUsername != xmppUsername()) {
+        m_settings->setValue(XMPP_USERNAME_KEY, newXmppUsername);
+        emit xmppUsernameChanged(newXmppUsername);
     }
 }
