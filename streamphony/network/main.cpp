@@ -1,5 +1,6 @@
 #include "dht/dhtmanager.h"
 #include "xmpp/xmppmanager.h"
+#include "settings/settingsmanager.h"
 
 #include "singleshottimer.h"
 
@@ -9,20 +10,22 @@
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
+    QCoreApplication app(argc, argv);
 
-    XmppManager xmppManager;
+    SettingsManager settingsManager(&app);
+    SettingsManager::instance()->setEmail(QStringLiteral("balazsbela@gmail.com"));
+
+    XmppManager xmppManager(&app);
 
     QCryptographicHash hash(QCryptographicHash::Sha1);
-    hash.addData("balazsbela@gmail.com");
+    hash.addData(SettingsManager::instance()->email().toStdString().c_str());
 
     bdNodeId ownId;
     bdStdNodeIdFromArray(&ownId, hash.result());
 
     uint16_t port = 6775;
 
-    DhtManager dht(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"));
-
+    DhtManager dht(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"), &app);
 
     QCryptographicHash friendHash(QCryptographicHash::Sha1);
     friendHash.addData("balazsbela90@gmail.com");
@@ -34,5 +37,5 @@ int main(int argc, char *argv[])
         dht.findNode(&friendId);
     }, nullptr);
 
-    return a.exec();
+    return app.exec();
 }
