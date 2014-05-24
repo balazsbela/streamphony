@@ -1,7 +1,8 @@
 #include "dht/dhtmanager.h"
 #include "xmpp/xmppmanager.h"
 #include "settings/settingsmanager.h"
-
+#include "daemon/lighthttpdaemon.h"
+#include "daemon/localfilecontentresolver.h"
 #include "singleshottimer.h"
 
 #include <QCoreApplication>
@@ -13,11 +14,15 @@ int main(int argc, char *argv[])
     QCoreApplication app(argc, argv);
 
     SettingsManager settingsManager(&app);
-    SettingsManager::instance()->setEmail(QStringLiteral("balazsbela@gmail.com"));
-    SettingsManager::instance()->setXmppUsername(QStringLiteral("balazsbela1"));
+//    SettingsManager::instance()->setEmail(QStringLiteral("balazsbela@gmail.com"));
+//    SettingsManager::instance()->setXmppUsername(QStringLiteral("balazsbela1"));
 
     XmppManager xmppManager(&app);
     xmppManager.signIn();
+
+    LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
+    LightHttpDaemon daemon(8081);
+    daemon.setContentResolver(resolver);
 
     QCryptographicHash hash(QCryptographicHash::Sha1);
     hash.addData(SettingsManager::instance()->email().toStdString().c_str());

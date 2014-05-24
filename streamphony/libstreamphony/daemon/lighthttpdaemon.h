@@ -1,6 +1,7 @@
 #ifndef LIGHTHTTPDAEMON_H
 #define LIGHTHTTPDAEMON_H
 
+#include "portfwd.h"
 #include <QTcpServer>
 
 class ContentResolver;
@@ -14,13 +15,14 @@ public:
 
     void setContentResolver(ContentResolver *contentResolver);
 
-
 private slots:
     void acceptConnection();
     void handleClient();
 
 private:
     QScopedPointer<ContentResolver> m_contentResolver;
+    Portfwd m_portForwarder;
+    quint32 m_port;
 };
 
 #endif // LIGHTHTTPDAEMON_H

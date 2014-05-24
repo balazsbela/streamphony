@@ -19,14 +19,19 @@ SOURCES += \
     dht/dhtmanager.cpp \
     dht/dhtcallbacks.cpp \
     xmpp/xmppmanager.cpp \
-    settings/settingsmanager.cpp
+    settings/settingsmanager.cpp \
+    daemon/lighthttpdaemon.cpp \
+    daemon/localfilecontentresolver.cpp \
 
 HEADERS += \
     dht/dhtmanager.h \
     dht/dhtdebug.h \
     dht/dhtcallbacks.h \
     xmpp/xmppmanager.h \
-    settings/settingsmanager.h
+    settings/settingsmanager.h \
+    daemon/lighthttpdaemon.h \
+    daemon/localfilecontentresolver.h \
+    daemon/contentresolver.h
 
 #unix {
 #    target.path = /usr/lib

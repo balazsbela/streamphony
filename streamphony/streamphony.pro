@@ -8,10 +8,10 @@ CONFIG += ordered
 
 SUBDIRS +=  utils \
     3rdparty \
+    libstreamphony \
     mainapp \
     audioserver \
-    audioplayer \
-    libstreamphony \
+    audioplayer \    
     network
 
 

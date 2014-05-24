@@ -1,5 +1,5 @@
-#include "lighthttpdaemon.h"
-#include "localfilecontentresolver.h"
+#include "daemon/lighthttpdaemon.h"
+#include "daemon/localfilecontentresolver.h"
 
 #include <QCoreApplication>
 

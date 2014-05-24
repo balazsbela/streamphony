@@ -11,3 +11,6 @@ CONFIG(debug, debug|release) {
 }
 
 INCLUDEPATH += $$OUT_PWD/../3rdparty/qxmpp/build/include/qxmpp
+
+LIBS += -L$$OUT_PWD/../3rdparty/libportfwd -lportfwd
+INCLUDEPATH += $$PWD/../3rdparty/libportfwd/include/portfwd

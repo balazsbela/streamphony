@@ -18,11 +18,7 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 
-SOURCES += main.cpp \
-    lighthttpdaemon.cpp \
-    localfilecontentresolver.cpp
+SOURCES += main.cpp
 
-HEADERS += \
-    lighthttpdaemon.h \
-    contentresolver.h \
-    localfilecontentresolver.h
+addModule(libstreamphony, libstreamphony.a)
+include(../libstreamphony/modules.pri);
