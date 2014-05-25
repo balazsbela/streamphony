@@ -11,14 +11,25 @@ const QString CONTENT_LENGTH_HEADER = QStringLiteral("Content-Length: %1 \r\n\r\
 
 const int MAX_PENDING_CONNECTIONS = 300; // This is sparta!
 
-LightHttpDaemon::LightHttpDaemon(quint32 port, QObject *parent) :
-    QTcpServer(parent) ,
-    m_port(port)
-{    
-    m_portForwarder.init(2000);
-    m_portForwarder.add(port);
+LightHttpDaemon::LightHttpDaemon(quint32 minPort, quint32 maxPort, QObject *parent) :
+    QTcpServer(parent)
+{           
+    quint32 port = minPort;
+    while (!listen(QHostAddress::Any, port) && port <= maxPort) {
+        port++;
+    }
 
-    listen(QHostAddress::Any, port);
+    if (port <= maxPort) {
+        qDebug() << "Bound http daemon to:" << port;
+        m_port = port;
+    } else {
+        qWarning() << "Couldn't bind http daemon to any port in the range!";
+        return;
+    }
+
+    m_portForwarder.init(2000);
+    m_portForwarder.add(m_port);
+
     connect(this, &QTcpServer::newConnection, this, &LightHttpDaemon::acceptConnection);
     setMaxPendingConnections(MAX_PENDING_CONNECTIONS);
 }

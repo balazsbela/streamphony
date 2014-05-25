@@ -23,6 +23,8 @@ int DhtCallbacks::dhtPeerCallback(const bdNodeId *id, uint32_t status)
 {
     debugDht() << "DHT Peer Callback" << status << endl;
     bdStdPrintNodeId(std::cout, id);
+
+    m_parent->foundPeer(id, status);
     return 0;
 }
 
@@ -35,6 +37,3 @@ int DhtCallbacks::dhtValueCallback(const bdNodeId *id, std::string key, uint32_t
 
     return 0;
 }
-
-
-

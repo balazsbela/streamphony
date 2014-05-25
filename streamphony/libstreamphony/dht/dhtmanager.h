@@ -9,6 +9,7 @@
 #include <QObject>
 #include <QScopedPointer>
 #include <QTimer>
+#include <QHostAddress>
 
 class DhtManager : public QObject
 {
@@ -23,9 +24,17 @@ public:
     bool isEnabled();
     bool isActive();
 
-    bool findNode(bdNodeId *peerId);
+    bool findNode(bdNodeId *peerId) const;
     bool dropNode(bdNodeId *peerId);
 
+    bool findNode(const QString &dataToHash) const;
+    QByteArray hash(const QString &data) const;
+
+    // Callback handler
+    void foundPeer(const bdNodeId *id, uint32_t status);
+
+signals:
+    void peerIpFound(const QString &nodeId, const QHostAddress &ip, const quint16 port);
 
 private:
     /* real DHT classes */

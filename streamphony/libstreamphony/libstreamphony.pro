@@ -22,6 +22,8 @@ SOURCES += \
     settings/settingsmanager.cpp \
     daemon/lighthttpdaemon.cpp \
     daemon/localfilecontentresolver.cpp \
+    daemon/connectionmanager.cpp \
+    daemon/node.cpp
 
 HEADERS += \
     dht/dhtmanager.h \
@@ -31,7 +33,10 @@ HEADERS += \
     settings/settingsmanager.h \
     daemon/lighthttpdaemon.h \
     daemon/localfilecontentresolver.h \
-    daemon/contentresolver.h
+    daemon/contentresolver.h \
+    daemon/portrange.h \
+    daemon/connectionmanager.h \
+    daemon/node.h
 
 #unix {
 #    target.path = /usr/lib

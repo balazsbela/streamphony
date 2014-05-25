@@ -21,7 +21,6 @@ public:
 
 private:
     QPointer<DhtManager> m_parent;
-
 };
 
 #endif // DHTCALLBACKS_H

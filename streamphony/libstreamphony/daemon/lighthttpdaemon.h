@@ -10,7 +10,7 @@ class LightHttpDaemon : public QTcpServer
 {
     Q_OBJECT
 public:
-    explicit LightHttpDaemon(quint32 port, QObject *parent = 0);
+    explicit LightHttpDaemon(quint32 minPort, quint32 maxPort, QObject *parent = 0);
     ~LightHttpDaemon() override;
 
     void setContentResolver(ContentResolver *contentResolver);
@@ -22,7 +22,7 @@ private slots:
 private:
     QScopedPointer<ContentResolver> m_contentResolver;
     Portfwd m_portForwarder;
-    quint32 m_port;
+    quint32 m_port = 0;
 };
 
 #endif // LIGHTHTTPDAEMON_H

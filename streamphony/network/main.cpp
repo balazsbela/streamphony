@@ -4,6 +4,8 @@
 #include "daemon/lighthttpdaemon.h"
 #include "daemon/localfilecontentresolver.h"
 #include "singleshottimer.h"
+#include "daemon/portrange.h"
+#include "daemon/connectionmanager.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -21,7 +23,7 @@ int main(int argc, char *argv[])
     xmppManager.signIn();
 
     LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
-    LightHttpDaemon daemon(8081);
+    LightHttpDaemon daemon(MIN_PORT, MAX_PORT, &app);
     daemon.setContentResolver(resolver);
 
     QCryptographicHash hash(QCryptographicHash::Sha1);
@@ -34,15 +36,18 @@ int main(int argc, char *argv[])
 
     DhtManager dht(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"), &app);
 
-    QCryptographicHash friendHash(QCryptographicHash::Sha1);
-    friendHash.addData("balazsbela90@gmail.com");
+    ConnectionManager connectionManager(&dht, &xmppManager, &app);
 
-    bdNodeId friendId;
-    bdStdNodeIdFromArray(&friendId, friendHash.result());
 
-    utils::singleShotTimer(15000, [&]() {
-        dht.findNode(&friendId);
-    }, nullptr);
+//    QCryptographicHash friendHash(QCryptographicHash::Sha1);
+//    friendHash.addData("balazsbela90@gmail.com");
+
+//    bdNodeId friendId;
+//    bdStdNodeIdFromArray(&friendId, friendHash.result());
+
+//    utils::singleShotTimer(15000, [&]() {
+//        dht.findNode(&friendId);
+//    }, nullptr);
 
     return app.exec();
 }

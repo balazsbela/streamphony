@@ -2,12 +2,16 @@
 #include "dhtdebug.h"
 #include "dhtcallbacks.h"
 #include "singleshottimer.h"
+#include "bitdht/bdiface.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <memory>
+#include <sstream>
+
+#include <QCryptographicHash>
 
 static const int PEER_DISCOVERY_TIMEOUT = 180000; //msecs
 static const int RANDOM_PEER_LIMIT = 13;
@@ -87,7 +91,7 @@ bool DhtManager::isActive()
     return m_udpBitDht->stateDht() >= BITDHT_MGR_STATE_ACTIVE;
 }
 
-bool DhtManager::findNode(bdNodeId *peerId)
+bool DhtManager::findNode(bdNodeId *peerId) const
 {
     std::cerr << "BitDhtHandler::FindNode(";
     bdStdPrintNodeId(std::cerr, peerId);
@@ -95,25 +99,25 @@ bool DhtManager::findNode(bdNodeId *peerId)
 
     m_udpBitDht->addFindNode(peerId, BITDHT_QFLAGS_DO_IDLE);
 
-    auto poll = [this, peerId]() {
-        struct sockaddr_in peerAddr;
-        if (m_udpBitDht->getDhtPeerAddress(peerId, peerAddr)) {
-            qDebug() << "FOUND PEER:" << endl;
-            qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << htons(peerAddr.sin_port) << endl;
-            m_pollTimer.stop();
-        } else {
-            qDebug() << endl << endl << "Couldn't find peer yet!" << endl;
-        }
-    };
+//    auto poll = [this, peerId]() {
+//        struct sockaddr_in peerAddr;
+//        if (m_udpBitDht->getDhtPeerAddress(peerId, peerAddr)) {
+//            qDebug() << "FOUND PEER:" << endl;
+//            qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << htons(peerAddr.sin_port) << endl;
+//            m_pollTimer.stop();
+//        } else {
+//            qDebug() << endl << endl << "Couldn't find peer yet!" << endl;
+//        }
+//    };
 
-    QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
+//    QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
 
-    m_pollTimer.setInterval(10000);
-    connect(&m_pollTimer, &QTimer::timeout, [=]() {
-        (*callback)();
-    });
+//    m_pollTimer.setInterval(10000);
+//    connect(&m_pollTimer, &QTimer::timeout, [=]() {
+//        (*callback)();
+//    });
 
-    m_pollTimer.start();
+//    m_pollTimer.start();
 
     return true;
 }
@@ -127,4 +131,37 @@ bool DhtManager::dropNode(bdNodeId *peerId)
 
     m_udpBitDht->removeFindNode(peerId);
     return true ;
+}
+
+void DhtManager::foundPeer(const bdNodeId *id, uint32_t status)
+{
+    struct sockaddr_in peerAddr;
+    if (m_udpBitDht->getDhtPeerAddress(id, peerAddr)) {
+
+        quint16 port = htons(peerAddr.sin_port);
+
+        qDebug() << "FOUND PEER:" << endl;
+        qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << port << endl;
+
+        std::stringstream stream;
+        bdStdPrintNodeId(stream, id);
+
+        emit peerIpFound(QString::fromStdString(stream.str()),
+                         QHostAddress(QString(inet_ntoa(peerAddr.sin_addr))), port);
+    }
+}
+
+bool DhtManager::findNode(const QString &dataToHash) const
+{
+    bdNodeId friendId;
+    bdStdNodeIdFromArray(&friendId, hash(dataToHash));
+
+    return findNode(&friendId);
+}
+
+QByteArray DhtManager::hash(const QString &data) const
+{
+    QCryptographicHash friendHash(QCryptographicHash::Sha1);
+    friendHash.addData(data.toStdString().c_str());
+    return friendHash.result();
 }
