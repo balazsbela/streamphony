@@ -15,11 +15,12 @@ CC = g++
 RM = /bin/rm
 RANLIB = ranlib
 LIBDIR = $(LIB_TOP_DIR)/lib
+#RSLIBDIR = $(LIB_TOP_DIR)/../../libretroshare/src/lib
 LIBRS = $(LIBDIR)/libretroshare.a
 
 # Unix: Linux/Cygwin
 INCLUDE = -I $(LIB_TOP_DIR)
-CFLAGS = -Wall -g $(INCLUDE) 
+CFLAGS = -Wall -g $(INCLUDE)
 CFLAGS += ${DEFINES} -D BE_DEBUG
 
 #########################################################################
@@ -31,11 +32,12 @@ CFLAGS += ${DEFINES} -D BE_DEBUG
 #########################################################################
 
 LIBS =  -L$(LIBDIR) -lbitdht
-LIBS +=  -lpthread
-#LIBS +=  $(XLIB) -ldl -lz 
+LIBS +=  -lpthread -lcrypto
+#LIBS +=  -L$(RSLIBDIR) -lretroshare
+#LIBS +=  $(XLIB) -ldl -lz
 #LIBS +=  -lupnp
 #LIBS +=  -lgpgme
-#	
+#
 #RSLIBS = $(LIBS)
 
 

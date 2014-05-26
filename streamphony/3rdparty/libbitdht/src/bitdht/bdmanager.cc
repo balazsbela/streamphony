@@ -42,17 +42,30 @@
 #include "bitdht/bdmanager.h"
 #include "bitdht/bdmsgs.h"
 #include "bitdht/bencode.h"
+#include "bitdht/bdquerymgr.h"
+#include "bitdht/bdfilter.h"
 
 #include <algorithm>
-#include <sstream>
 #include <iomanip>
+#include <string.h>
 
 #include "util/bdnet.h"
+#include "util/bdrandom.h"
+#include "util/bdstring.h"
 
 /***
  * #define DEBUG_MGR 1
  * #define DEBUG_MGR_PKT 1
  ***/
+
+//#define DEBUG_MGR 1
+
+//#define LOCAL_NET_FLAG		(BITDHT_PEER_STATUS_DHT_APPL)
+#define LOCAL_NET_FLAG		(BITDHT_PEER_STATUS_DHT_ENGINE)
+// This is eventually what we want.
+//#define LOCAL_NET_FLAG		(BITDHT_PEER_STATUS_DHT_ENGINE_VERSION)
+
+#define QUERY_UPDATE_PERIOD 8 	// under refresh period - so it'll happen at the MAX_REFRESH_PERIOD
 
 
 bdNodeManager::bdNodeManager(bdNodeId *id, std::string dhtVersion, std::string bootfile, bdDhtFunctions *fns)
@@ -65,12 +78,17 @@ bdNodeManager::bdNodeManager(bdNodeId *id, std::string dhtVersion, std::string b
         mNetworkSize = 0;
         mBdNetworkSize = 0;
 
-	/* setup a query for self */
+	std::string bfilter = "edff727f3a49f55c0504ad99d4282f7a26b3f69b59ebc6ca496879c6805a0aa567dffb755f17fdfd44dd24180bf2b61ebfbe68e9a53e79d7893f002140882daf7efbfed66f36eb170064208286040001fbefbbbbef1fa7fdf4a21128d050a208cd3a529a7efdc672c8255130e022b134bc6c77dfbf455d054349c575774d427b";
+
+	mBloomFilter.setFilterBits(bfilter);
+
 #ifdef DEBUG_MGR
 	std::cerr << "bdNodeManager::bdNodeManager() ID: ";
 	mFns->bdPrintNodeId(std::cerr, id);
 	std::cerr << std::endl;
 #endif
+
+	mLocalNetEnhancements = true;
 }
 
 int	bdNodeManager::stopDht()
@@ -82,7 +100,7 @@ int	bdNodeManager::stopDht()
 
 	/* flag queries as inactive */
 	/* check if exists already */
-	std::map<bdNodeId, bdQueryPeer>::iterator it;	
+	std::map<bdNodeId, bdQueryPeer>::iterator it;
 	for(it = mActivePeers.begin(); it != mActivePeers.end(); it++)
 	{
 		it->second.mStatus = BITDHT_QUERY_READY;
@@ -105,6 +123,10 @@ int	bdNodeManager::startDht()
 	mMode = BITDHT_MGR_STATE_STARTUP;
 	mModeTS = now;
 
+	mStartTS = now;
+	mSearchingDone = false;
+	mSearchTS = now;
+
 	return 1;
 }
 
@@ -112,6 +134,12 @@ int	bdNodeManager::startDht()
 int 	bdNodeManager::stateDht()
 {
 	return mMode;
+}
+
+int bdNodeManager::printDht()
+{
+	mNodeSpace.printDHT();
+	return 1;
 }
 
 uint32_t bdNodeManager::statsNetworkSize()
@@ -125,6 +153,39 @@ uint32_t bdNodeManager::statsBDVersionSize()
         return mBdNetworkSize;
 }
 
+uint32_t bdNodeManager::setDhtMode(uint32_t dhtFlags)
+{
+	/* handle options here? */
+	setNodeDhtMode(dhtFlags);
+
+	return dhtFlags;
+}
+
+
+bool bdNodeManager::setAttachMode(bool on)
+{
+	if (on)
+	{
+        	setNodeOptions(BITDHT_OPTIONS_MAINTAIN_UNSTABLE_PORT);
+	}
+	else
+	{
+        	setNodeOptions(0);
+	}
+        return on;
+}
+
+        /* Friend Tracking */
+void bdNodeManager::addBadPeer(const struct sockaddr_in &/*addr*/, uint32_t /*source*/, uint32_t /*reason*/, uint32_t /*age*/)
+{
+	std::cerr << "bdNodeManager::addBadPeer() not implemented yet!";
+	std::cerr << std::endl;
+}
+
+void bdNodeManager::updateKnownPeer(const bdId *id, uint32_t /* type */, uint32_t flags)
+{
+	mFriendList.updatePeer(id, flags);
+}
 
 void bdNodeManager::addFindNode(bdNodeId *id, uint32_t qflags)
 {
@@ -134,7 +195,7 @@ void bdNodeManager::addFindNode(bdNodeId *id, uint32_t qflags)
 	std::cerr << std::endl;
 #endif
 	/* check if exists already */
-	std::map<bdNodeId, bdQueryPeer>::iterator it;	
+	std::map<bdNodeId, bdQueryPeer>::iterator it;
 	it = mActivePeers.find(*id);
 	if (it != mActivePeers.end())
 	{
@@ -154,16 +215,66 @@ void bdNodeManager::addFindNode(bdNodeId *id, uint32_t qflags)
 	peer.mDhtAddr.sin_addr.s_addr = 0;
 	peer.mDhtAddr.sin_port = 0;
 
+	peer.mCallbackTS = 0;
+
 	mActivePeers[*id] = peer;
 #ifdef DEBUG_MGR
 	std::cerr << "bdNodeManager::addFindNode() Added QueryPeer as READY....";
 	std::cerr << std::endl;
 #endif
-    addQuery(id, qflags | BITDHT_QFLAGS_DISGUISE);
-    startQueries();
-
+	//addQuery(id, qflags | BITDHT_QFLAGS_DISGUISE);
 	return;
 }
+
+void bdNodeManager::postHash(bdId &targetNode, bdNodeId &key,
+                             std::string hash, std::string secret)
+{
+#ifdef DEBUG_MGR
+	std::cerr << "bdNodeManager::findDhtValue()";
+	std::cerr << std::endl;
+#endif
+	send_post_hash_query(targetNode, key, hash, secret);
+}
+
+void bdNodeManager::getHash(bdId &targetNode, bdNodeId &key)
+/*
+targetNode the the target node id
+key is the key to find in the DHT
+*/
+{
+#ifdef DEBUG_MGR
+	std::cerr << "bdNodeManager::findDhtValue()";
+	std::cerr << std::endl;
+#endif
+
+	// TODO: need to add the bdNodeId to active peers,
+	// 		 and then add support in bdquerymgr for the new query type (get hash)
+	//		 so that it can call bdNode::send_get_hash_query()
+	//		 instead of always calling bdNode::send_query()
+	// I'm concerned that the query will not find the closest peer for the hash
+	// beyond the first check in bdQueryManager.addQuery, which does a
+	// mNodeSpace->find_nearest_nodes(id, BITDHT_QUERY_START_PEERS, nearest);
+	// Is the provided bdNodeId here the id that the query is run against?
+	// If not, does bep005 say how the get_hash request works? i.e. it must know from hash how to get the peerid
+
+	// peer.mStatus = BITDHT_QUERY_QUERYING; //QUERYING;
+
+	// Skipping the whole adding to mActivePeers and then using
+	// startQueries() step which normally adds these to mQueryMgr.
+	// [TODO] We may want to remove the disguise flag. Check what qflags are.
+	// qflags = qflags | BITDHT_QFLAGS_DISGUISE;
+	// use key here?
+	// mQueryMgr->addQuery(targetNode, qflags);
+	// send_get_hash_query(bdId *id, bdNodeId *const info_hash)
+	send_get_hash_query(targetNode, key);
+
+	// TODO: We need the bdQueryManager to understand peer get hash queries.
+	//		 At the moment it only does find_node queries.
+	//
+	// void bdNode::send_get_hash_query(bdId *id, bdNodeId *const info_hash)
+	// send_get_hash_query(id, key);
+}
+
 
 	/* finds a queued query, and starts it */
 void bdNodeManager::startQueries()
@@ -173,7 +284,7 @@ void bdNodeManager::startQueries()
 	std::cerr << std::endl;
 #endif
 	/* check if exists already */
-	std::map<bdNodeId, bdQueryPeer>::iterator it;	
+	std::map<bdNodeId, bdQueryPeer>::iterator it;
 	for(it = mActivePeers.begin(); it != mActivePeers.end(); it++)
 	{
 		if (it->second.mStatus == BITDHT_QUERY_READY)
@@ -185,7 +296,7 @@ void bdNodeManager::startQueries()
 			it->second.mStatus = BITDHT_QUERY_QUERYING;
 
 			uint32_t qflags = it->second.mQFlags | BITDHT_QFLAGS_DISGUISE;
-			addQuery(&(it->first), qflags); 
+			mQueryMgr->addQuery(&(it->first), qflags);
 
 			// add all queries at the same time!
 			//return;
@@ -202,7 +313,7 @@ void bdNodeManager::removeFindNode(bdNodeId *id)
 	mFns->bdPrintNodeId(std::cerr, id);
 	std::cerr << std::endl;
 #endif
-	std::map<bdNodeId, bdQueryPeer>::iterator it;	
+	std::map<bdNodeId, bdQueryPeer>::iterator it;
 	it = mActivePeers.find(*id);
 	if (it == mActivePeers.end())
 	{
@@ -210,7 +321,7 @@ void bdNodeManager::removeFindNode(bdNodeId *id)
 	}
 
 	/* cleanup any actions */
-	clearQuery(&(it->first));
+	mQueryMgr->clearQuery(&(it->first));
 	//clearPing(&(it->first));
 
 	/* remove from map */
@@ -245,31 +356,34 @@ void bdNodeManager::iteration()
 #endif
 				bdNodeId id;
 				getOwnId(&id);
-				addQuery(&id, BITDHT_QFLAGS_DO_IDLE | BITDHT_QFLAGS_DISGUISE); 
-				
+				mQueryMgr->addQuery(&id, BITDHT_QFLAGS_DO_IDLE | BITDHT_QFLAGS_DISGUISE);
+
 				mMode = BITDHT_MGR_STATE_FINDSELF;
 				mModeTS = now;
 			}
 			break;
 
 		case BITDHT_MGR_STATE_FINDSELF:
-			/* 60 seconds further startup .... then switch to ACTIVE 
+			/* 60 seconds further startup .... then switch to ACTIVE
 			 * if we reach TRANSITION_OP_SPACE_SIZE before this time, transition immediately...
 			 * if, after 60 secs, we haven't reached MIN_OP_SPACE_SIZE, restart....
 			 */
-			
-#define MAX_FINDSELF_TIME		60
-#define TRANSITION_OP_SPACE_SIZE	100 /* 1 query / sec, should take 12-15 secs */
-#define MIN_OP_SPACE_SIZE		20 
+
+#define TRANSITION_OP_SPACE_SIZE	2 /* 1 query / sec, should take 12-15 secs */
+#define MAX_FINDSELF_TIME		20 /* increased, as std rate has been dropped */
+// #define MIN_OP_SPACE_SIZE		10
+// testing parameters.
+//#define MAX_FINDSELF_TIME		10
+#define MIN_OP_SPACE_SIZE		2   // for testing. self + oneother.
 
 			{
 				uint32_t nodeSpaceSize = mNodeSpace.calcSpaceSize();
 
 #ifdef DEBUG_MGR
-#endif
 				std::cerr << "bdNodeManager::iteration() Finding Oneself: ";
 				std::cerr << "NodeSpace Size:" << nodeSpaceSize;
 				std::cerr << std::endl;
+#endif
 
 				if (nodeSpaceSize > TRANSITION_OP_SPACE_SIZE)
 				{
@@ -277,9 +391,9 @@ void bdNodeManager::iteration()
 					mModeTS = now;
 				}
 
-				if (modeAge > MAX_FINDSELF_TIME) 
+				if (modeAge > MAX_FINDSELF_TIME)
 				{
-					if (nodeSpaceSize > MIN_OP_SPACE_SIZE)
+					if (nodeSpaceSize >= MIN_OP_SPACE_SIZE)
 					{
 						mMode = BITDHT_MGR_STATE_REFRESH;
 						mModeTS = now;
@@ -291,11 +405,11 @@ void bdNodeManager::iteration()
 					}
 				}
 			}
-			
+
 			break;
 
 		case BITDHT_MGR_STATE_ACTIVE:
-			if (modeAge > MAX_REFRESH_TIME)
+			if (modeAge >= MAX_REFRESH_TIME)
 			{
 #ifdef DEBUG_MGR
 				std::cerr << "bdNodeManager::iteration(): ACTIVE -> REFRESH";
@@ -332,12 +446,74 @@ void bdNodeManager::iteration()
 				updateStore();
 
 #ifdef DEBUG_MGR
-				std::cerr << "bdNodeManager::iteration(): REFRESH ";
+				std::cerr << "bdNodeManager::iteration(): Cleaning up Filter (should do less frequently)";
+				std::cerr << std::endl;
+#endif
+
+				mFilterPeers->cleanupFilter();
+
+
+#ifdef DEBUG_MGR
+				std::cerr << "bdNodeManager::iteration(): Do App Search";
 				std::cerr << std::endl;
 #endif
 
 
-				status();
+				/* This stuff is only important for "LocalNet based Features */
+				if (mLocalNetEnhancements)
+				{
+					/* run a random search for ourselves, from own App DHT peer */
+					QueryRandomLocalNet();
+
+#define SEARCH_MAX_SIZE 10
+	 				if (mBdNetworkSize < SEARCH_MAX_SIZE)
+					{
+#ifdef DEBUG_MGR
+						std::cerr << "Local Netsize: " << mBdNetworkSize << " to small...searching";
+						std::cerr << std::endl;
+#endif
+
+						/* if the network size is very small */
+						SearchForLocalNet();
+						mSearchingDone = false;
+					}
+					else
+					{
+						if (!mSearchingDone)
+						{
+							mSearchingDone = true;
+							mSearchTS = now;
+#ifdef DEBUG_MGR
+							std::cerr << "Completed LocalNet Search in : " << mSearchTS-mStartTS;
+							std::cerr << std::endl;
+#endif
+						}
+					}
+				}
+
+#ifdef DEBUG_MGR
+				std::cerr << "bdNodeManager::iteration(): REFRESH ";
+				std::cerr << std::endl;
+#endif
+
+				status(); /* calculates mNetworkSize */
+
+#ifdef DEBUG_MGR
+				mAccount.printStats(std::cerr);
+#endif
+
+				/* Finally, Fail, and restart if we lose all peers */
+				uint32_t nodeSpaceSize = mNodeSpace.calcSpaceSize();
+				if (nodeSpaceSize < MIN_OP_SPACE_SIZE)
+				{
+					std::cerr << "bdNodeManager::iteration(): SpaceSize to Small: " << nodeSpaceSize;
+					std::cerr << std::endl;
+					std::cerr << "bdNodeManager::iteration(): REFRESH ==> FAILED";
+					std::cerr << std::endl;
+
+					mMode = BITDHT_MGR_STATE_FAILED;
+					mModeTS = now;
+				}
 			}
 			break;
 
@@ -376,18 +552,170 @@ void bdNodeManager::iteration()
 	}
 }
 
+	/* NB: This is a bit of a hack, the code is duplicated from bdnode & bdquery.
+	 * should use fn calls into their functions for good generality
+	 */
+
+#define RANDOM_SEARCH_FRAC	(0.1)
+
+int bdNodeManager::QueryRandomLocalNet()
+{
+        bdId id;
+	bdNodeId targetNodeId;
+
+	uint32_t withFlag = LOCAL_NET_FLAG;
+	if (mNodeSpace.findRandomPeerWithFlag(id, withFlag))
+	{
+		/* if we've got a very small network size... then ask them about a random peer.
+		 * (so we get there 159/158 boxes!
+		 */
+		bool isRandom = false;
+ 		if ((mBdNetworkSize < SEARCH_MAX_SIZE) || (RANDOM_SEARCH_FRAC > bdRandom::random_f32()))
+		{
+			bdStdRandomNodeId(&targetNodeId);
+			isRandom = true;
+		}
+		else
+		{
+			/* calculate mid point */
+			mFns->bdRandomMidId(&mOwnId, &(id.id), &targetNodeId);
+		}
+
+		/* do standard find_peer message */
+
+		mQueryMgr->addWorthyPeerSource(&id); /* Tell BitDHT that we really want to ping their peers */
+		send_query(&id, &targetNodeId);
+
+#ifdef DEBUG_MGR
+		std::cerr << "bdNodeManager::QueryRandomLocalNet() Querying : ";
+		mFns->bdPrintId(std::cerr, &id);
+		std::cerr << " searching for : ";
+		mFns->bdPrintNodeId(std::cerr, &targetNodeId);
+		std::cerr << std::endl;
+#endif
+
+		if (isRandom)
+		{
+#ifdef DEBUG_MGR
+			std::cerr << "bdNodeManager::QueryRandomLocalNet() Search is Random!";
+			std::cerr << std::endl;
+#endif
+		}
+
+		return 1;
+	}
+	else
+	{
+#ifdef DEBUG_MGR
+		std::cerr << "bdNodeManager::QueryRandomLocalNet() No LocalNet Peer Found";
+		std::cerr << std::endl;
+#endif
+	}
+
+	return 0;
+}
+
+
+
+void bdNodeManager::SearchForLocalNet()
+{
+
+
+#ifdef DEBUG_MGR
+	std::cerr << "bdNodeManager::SearchForLocalNet()";
+	std::cerr << std::endl;
+#endif
+
+	/* Check how many "Search Queries" we've got going. */
+
+	/* check queries */
+        std::map<bdNodeId, bdQueryStatus>::iterator it;
+        std::map<bdNodeId, bdQueryStatus> queryStatus;
+
+
+	mQueryMgr->QueryStatus(queryStatus);
+
+	int numSearchQueries = 0;
+	for(it = queryStatus.begin(); it != queryStatus.end(); it++)
+	{
+		if (it->second.mQFlags & BITDHT_QFLAGS_INTERNAL)
+		{
+			std::cerr << "bdNodeManager::SearchForLocalNet() Existing Internal Search: ";
+			mFns->bdPrintNodeId(std::cerr, &(it->first));
+			std::cerr << std::endl;
+
+			numSearchQueries++;
+		}
+	}
+
+#define MAX_SEARCH_QUERIES 5
+
+	for(;numSearchQueries < MAX_SEARCH_QUERIES; numSearchQueries++)
+	{
+		/* install a new query */
+		bdNodeId targetNodeId;
+
+		/* get something that filter approves of */
+		bool filterOk = false;
+		int i;
+
+#define MAX_FILTER_ATTEMPTS	3000
+
+		for(i = 0; (!filterOk) && (i < MAX_FILTER_ATTEMPTS); i++)
+		{
+			bdStdRandomNodeId(&targetNodeId);
+			std::string tststr;
+			bdStdPrintNodeId(tststr, &targetNodeId, false);
+
+			if (mBloomFilter.test(tststr))
+			{
+				filterOk = true;
+			}
+		}
+
+		if (filterOk)
+		{
+#ifdef DEBUG_MGR
+			std::cerr << "bdNodeManager::SearchForLocalNet() " << i << " Attempts to find OkNode: ";
+			mFns->bdPrintNodeId(std::cerr, &targetNodeId);
+			std::cerr << std::endl;
+#endif
+		}
+		else
+		{
+#ifdef DEBUG_MGR
+			std::cerr << "bdNodeManager::SearchForLocalNet() Failed to Find FilterOk this time: ";
+			mFns->bdPrintNodeId(std::cerr, &targetNodeId);
+			std::cerr << std::endl;
+#endif
+		}
+
+
+		uint32_t qflags = BITDHT_QFLAGS_INTERNAL | BITDHT_QFLAGS_DISGUISE;
+		mQueryMgr->addQuery(&targetNodeId, qflags);
+
+#ifdef DEBUG_MGR
+		std::cerr << "bdNodeManager::SearchForLocalNet() Adding New Internal Search: ";
+		mFns->bdPrintNodeId(std::cerr, &(targetNodeId));
+		std::cerr << std::endl;
+#endif
+	}
+}
+
 
 int bdNodeManager::status()
 {
 	/* do status of bdNode */
+#ifdef DEBUG_MGR
+#endif
 	printState();
 
 	checkStatus();
+	checkBadPeerStatus();
 
 	/* update the network numbers */
 	mNetworkSize = mNodeSpace.calcNetworkSize();
-	mBdNetworkSize = mNodeSpace.calcNetworkSizeWithFlag(
-					BITDHT_PEER_STATUS_DHT_APPL);
+	mBdNetworkSize = mNodeSpace.calcNetworkSizeWithFlag(LOCAL_NET_FLAG);
 
 #ifdef DEBUG_MGR
 	std::cerr << "BitDHT NetworkSize: " << mNetworkSize << std::endl;
@@ -405,12 +733,30 @@ int bdNodeManager::checkStatus()
 	std::cerr << std::endl;
 #endif
 
+	// get hash result hack to avoid using querymanager for now
+	if(mGetHashResultReady == true)
+	{
+		// void 	doValueCallback(const bdId *id, std::string key, uint32_t status);
+		doValueCallback(&mGetHashBdId, mGetHashKey, 0);
+		mGetHashResultReady = false;
+	}
+
+	if(mPostHashQueryFinished == true)
+	{
+		// void 	doValueCallback(const bdId *id, std::string key, uint32_t status);
+		// Should really pass back the mPostHashQuerySuccessful param here,
+		// instead doValueCallback for post_hash_success assumes that
+		// it was successful.
+		doValueCallback(&mGetHashBdId, "post_hash_success", 0);
+		mPostHashQueryFinished = false;
+	}
+
 	/* check queries */
-        std::map<bdNodeId, bdQueryStatus>::iterator it;
-        std::map<bdNodeId, bdQueryStatus> queryStatus;
+	std::map<bdNodeId, bdQueryStatus>::iterator it;
+	std::map<bdNodeId, bdQueryStatus> queryStatus;
 
 
-        QueryStatus(queryStatus);
+	mQueryMgr->QueryStatus(queryStatus);
 
 	for(it = queryStatus.begin(); it != queryStatus.end(); it++)
 	{
@@ -482,7 +828,7 @@ int bdNodeManager::checkStatus()
 					mFns->bdPrintNodeId(std::cerr, &(it->first));
 					std::cerr << std::endl;
 #endif
-					//foundId = 
+					//foundId =
 					doRemove = true;
 					doCallback = true;
 					doSaveAddress = true;
@@ -492,7 +838,7 @@ int bdNodeManager::checkStatus()
 		}
 
 		/* remove done queries */
-		if (doRemove) 
+		if (doRemove)
 		{
 			if (it->second.mQFlags & BITDHT_QFLAGS_DO_IDLE)
 			{
@@ -500,14 +846,14 @@ int bdNodeManager::checkStatus()
 			}
 		}
 
-		if (doRemove) 
+		if (doRemove)
 		{
 #ifdef DEBUG_MGR
 		std::cerr << "bdNodeManager::checkStatus() Removing query: id: ";
 		mFns->bdPrintNodeId(std::cerr, &(it->first));
 		std::cerr << std::endl;
 #endif
-			clearQuery(&(it->first));
+			mQueryMgr->clearQuery(&(it->first));
 		}
 
 		/* FIND in activePeers */
@@ -525,19 +871,45 @@ int bdNodeManager::checkStatus()
 			std::cerr << std::endl;
 #endif
 		}
-		else 
+		else
 		{
 			if (pit->second.mStatus == it->second.mStatus)
 			{
 				/* status is unchanged */
-				doPing = false;
-				doCallback = false;
 #ifdef DEBUG_MGR
 				std::cerr << "bdNodeManager::checkStatus() Status unchanged for : ";
 				mFns->bdPrintNodeId(std::cerr, &(it->first));
 				std::cerr << " status: " << it->second.mStatus;
 				std::cerr << std::endl;
 #endif
+
+
+				time_t now = time(NULL);
+				/* now we check if we've done a callback before... */
+				if (it->second.mQFlags & BITDHT_QFLAGS_UPDATES)
+				{
+					if (now - pit->second.mCallbackTS > QUERY_UPDATE_PERIOD)
+					{
+						// keep flags.
+#ifdef DEBUG_MGR
+						std::cerr << "bdNodeManager::checkStatus() Doing Update Callback for";
+						mFns->bdPrintNodeId(std::cerr, &(it->first));
+						std::cerr << " status: " << it->second.mStatus;
+						std::cerr << std::endl;
+#endif
+					}
+					else
+					{
+						/* no callback this time */
+						doPing = false;
+						doCallback = false;
+					}
+				}
+				else
+				{
+					doPing = false;
+					doCallback = false;
+				}
 			}
 			else
 			{
@@ -564,29 +936,33 @@ int bdNodeManager::checkStatus()
 					pit->second.mDhtAddr.sin_port = 0;
 				}
 			}
-		}
 
-		/* add successful queries to ping list */
-		if (doPing)
-		{
+			/* add successful queries to ping list */
+			if (doPing)
+			{
 #ifdef DEBUG_MGR
-		std::cerr << "bdNodeManager::checkStatus() Starting Ping (TODO): id: ";
-		mFns->bdPrintNodeId(std::cerr, &(it->first));
-		std::cerr << std::endl;
+				std::cerr << "bdNodeManager::checkStatus() Starting Ping (TODO): id: ";
+				mFns->bdPrintNodeId(std::cerr, &(it->first));
+				std::cerr << std::endl;
 #endif
-			/* add first matching peer */
-			//addPeerPing(foundId);
-		}
+				/* add first matching peer */
+				//addPeerPing(foundId);
+			}
 
-		/* callback on new successful queries */
-		if (doCallback)
-		{
+			/* callback on new successful queries */
+			if (doCallback)
+			{
 #ifdef DEBUG_MGR
-		std::cerr << "bdNodeManager::checkStatus() Doing Callback: id: ";
-		mFns->bdPrintNodeId(std::cerr, &(it->first));
-		std::cerr << std::endl;
+				std::cerr << "bdNodeManager::checkStatus() Doing Callback: id: ";
+				mFns->bdPrintNodeId(std::cerr, &(it->first));
+				std::cerr << std::endl;
 #endif
-			doPeerCallback(&(it->first), callbackStatus);
+
+				time_t now = time(NULL);
+				pit->second.mCallbackTS = now;
+				bdId id(it->first,pit->second.mDhtAddr);
+				doPeerCallback(&id, callbackStatus);
+			}
 		}
 	}
 	return 1;
@@ -621,14 +997,14 @@ bdNodeManager::checkPingStatus()
 
 			case BITDHT_QUERY_FOUND_CLOSEST:
 				{
-					
+
 					doRemove = true;
 				}
 				break;
 
 			case BITDHT_QUERY_SUCCESS:
 				{
-					foundId = 
+					foundId =
 					doRemove = true;
 				}
 				break;
@@ -656,6 +1032,18 @@ bdNodeManager::checkPingStatus()
 }
 #endif
 
+int bdNodeManager::checkBadPeerStatus()
+{
+	bdId id;
+	uint32_t flags;
+	std::string nullstr;
+
+	while(mBadPeerQueue.popPeer(&id, flags))
+	{
+		doInfoCallback(&id, BITDHT_INFO_CB_TYPE_BADPEER, flags, nullstr);
+	}
+	return 1;
+}
 
 int bdNodeManager::SearchOutOfDate()
 {
@@ -686,15 +1074,6 @@ int bdNodeManager::SearchOutOfDate()
         /* Request DHT Peer Lookup */
         /* Request Keyword Lookup */
 
-void bdNodeManager::findDhtValue(bdNodeId * /*id*/, std::string /*key*/, uint32_t /*mode*/)
-{
-#ifdef DEBUG_MGR
-	std::cerr << "bdNodeManager::findDhtValue() TODO";
-	std::cerr << std::endl;
-#endif
-}
-
-
         /***** Get Results Details *****/
 int bdNodeManager::getDhtPeerAddress(const bdNodeId *id, struct sockaddr_in &from)
 {
@@ -723,7 +1102,7 @@ int bdNodeManager::getDhtPeerAddress(const bdNodeId *id, struct sockaddr_in &fro
 			from = pit->second.mDhtAddr;
 
 			std::cerr << "bdNodeManager::getDhtPeerAddress() Found Peer Address:";
-			std::cerr << inet_ntoa(from.sin_addr) << ":" << htons(from.sin_port);
+			std::cerr << bdnet_inet_ntoa(from.sin_addr) << ":" << htons(from.sin_port);
 			std::cerr << std::endl;
 
 			return 1;
@@ -748,6 +1127,21 @@ int bdNodeManager::getDhtValue(const bdNodeId *id, std::string key, std::string 
 	return 1;
 }
 
+int bdNodeManager::getDhtBucket(const int idx, bdBucket &bucket)
+{
+	return mNodeSpace.getDhtBucket(idx, bucket);
+}
+
+int bdNodeManager::getDhtQueries(std::map<bdNodeId, bdQueryStatus> &queries)
+{
+	mQueryMgr->QueryStatus(queries);
+	return 1;
+}
+
+int bdNodeManager::getDhtQueryStatus(const bdNodeId *id, bdQuerySummary &query)
+{
+	return mQueryMgr->QuerySummary(id, query);
+}
 
 
         /***** Add / Remove Callback Clients *****/
@@ -819,12 +1213,12 @@ void bdNodeManager::doNodeCallback(const bdId *id, uint32_t peerflags)
         return;
 }
 
-void bdNodeManager::doPeerCallback(const bdNodeId *id, uint32_t status)
+void bdNodeManager::doPeerCallback(const bdId *id, uint32_t status)
 {
 
 #ifdef DEBUG_MGR
 	std::cerr << "bdNodeManager::doPeerCallback()";
-	mFns->bdPrintNodeId(std::cerr, id);
+	mFns->bdPrintId(std::cerr, id);
 	std::cerr << "status: " << status;
 	std::cerr << std::endl;
 #endif
@@ -838,7 +1232,7 @@ void bdNodeManager::doPeerCallback(const bdNodeId *id, uint32_t status)
         return;
 }
 
-void bdNodeManager::doValueCallback(const bdNodeId *id, std::string /*key*/, uint32_t status)
+void bdNodeManager::doValueCallback(const bdId *id, std::string key, uint32_t status)
 {
 	std::cerr << "bdNodeManager::doValueCallback()";
 	std::cerr << std::endl;
@@ -849,15 +1243,47 @@ void bdNodeManager::doValueCallback(const bdNodeId *id, std::string /*key*/, uin
         std::list<BitDhtCallback *>::iterator it;
         for(it = mCallbacks.begin(); it != mCallbacks.end(); it++)
         {
-                (*it)->dhtPeerCallback(id, status);
+                (*it)->dhtValueCallback(id, key, status);
         }
         return;
 }
+
+
+void bdNodeManager::doInfoCallback(const bdId *id, uint32_t type, uint32_t flags, std::string info)
+{
+	std::cerr << "bdNodeManager::doInfoCallback()";
+	std::cerr << std::endl;
+
+#ifdef DEBUG_MGR
+#endif
+        /* search list */
+        std::list<BitDhtCallback *>::iterator it;
+        for(it = mCallbacks.begin(); it != mCallbacks.end(); it++)
+        {
+                (*it)->dhtInfoCallback(id, type, flags, info);
+        }
+        return;
+}
+
+
+#define BITDHT_IDENTITY_STRING_V1  	"d1:"
+#define BITDHT_IDENTITY_SIZE_V1    	3
+#define BITDHT_PACKET_MIN_SIZE		4
 
         /******************* Internals *************************/
 int     bdNodeManager::isBitDhtPacket(char *data, int size, struct sockaddr_in & from)
 
 {
+
+	/* use a very simple initial check */
+        if (size < BITDHT_PACKET_MIN_SIZE)
+                return 0;
+
+        return (0 == strncmp(data, BITDHT_IDENTITY_STRING_V1, BITDHT_IDENTITY_SIZE_V1));
+
+	/* Below is the old version! */
+
+
 #ifdef DEBUG_MGR_PKT
 	std::cerr << "bdNodeManager::isBitDhtPacket() *******************************";
         std::cerr << " from " << inet_ntoa(from.sin_addr);
@@ -865,26 +1291,23 @@ int     bdNodeManager::isBitDhtPacket(char *data, int size, struct sockaddr_in &
 	std::cerr << std::endl;
 	{
 		/* print the fucker... only way to catch bad ones */
-		std::ostringstream out;
+		std::string out;
 		for(int i = 0; i < size; i++)
 		{
 			if (isascii(data[i]))
 			{
-				out << data[i];
+				out += data[i];
 			}
 			else
 			{
-				out << "[";
-		                out << std::setw(2) << std::setfill('0') 
-					<< std::hex << (uint32_t) data[i];
-				out << "]";
+				bd_sprintf_append(out, "[%02lx]", (uint32_t) data[i]);
 			}
 			if ((i % 16 == 0) && (i != 0))
 			{
-				out << std::endl;
+				out += "\n";
 			}
 		}
-		std::cerr << out.str();
+		std::cerr << out;
 	}
 	std::cerr << "bdNodeManager::isBitDhtPacket() *******************************";
 	std::cerr << std::endl;
@@ -907,26 +1330,23 @@ int     bdNodeManager::isBitDhtPacket(char *data, int size, struct sockaddr_in &
 		std::cerr << std::endl;
 		{
 			/* print the fucker... only way to catch bad ones */
-			std::ostringstream out;
+			std::string out;
 			for(int i = 0; i < size; i++)
 			{
 				if (isascii(data[i]))
 				{
-					out << data[i];
+					out += data[i];
 				}
 				else
 				{
-					out << "[";
-			                out << std::setw(2) << std::setfill('0') 
-						<< std::hex << (uint32_t) data[i];
-					out << "]";
+					bd_sprintf_append(out, "[%02lx]", (uint32_t) data[i]);
 				}
 				if ((i % 16 == 0) && (i != 0))
 				{
-					out << std::endl;
+					out += "\n";
 				}
 			}
-			std::cerr << out.str();
+			std::cerr << out;
 		}
 		std::cerr << "bdNodeManager::BadPacket ******************************";
 		std::cerr << std::endl;
@@ -935,7 +1355,7 @@ int     bdNodeManager::isBitDhtPacket(char *data, int size, struct sockaddr_in &
 	}
 
         /* find message type */
-        uint32_t beType = beMsgType(node);	
+        uint32_t beType = beMsgType(node);
 	int ans = (beType != BITDHT_MSG_TYPE_UNKNOWN);
 	be_free(node);
 
@@ -950,7 +1370,7 @@ int     bdNodeManager::isBitDhtPacket(char *data, int size, struct sockaddr_in &
 		std::cerr << "bdNodeManager::isBitDhtPacket() NO: Unknown Type";
 		std::cerr << std::endl;
 	}
-	
+
 #endif
 	return ans;
 }
@@ -960,22 +1380,145 @@ bdDebugCallback::~bdDebugCallback()
 {
 }
 
-int bdDebugCallback::dhtPeerCallback(const bdNodeId *id, uint32_t status)
+int bdDebugCallback::dhtPeerCallback(const bdId *id, uint32_t status)
 {
+	/* remove unused parameter warnings */
+	(void) status;
+
+#ifdef DEBUG_MGR
 	std::cerr << "bdDebugCallback::dhtPeerCallback() Id: ";
-	bdStdPrintNodeId(std::cerr, id);
+#endif
+	bdStdPrintId(std::cerr, id);
+#ifdef DEBUG_MGR
 	std::cerr << " status: " << std::hex << status << std::dec << std::endl;
+#endif
 	return 1;
 }
 
-int bdDebugCallback::dhtValueCallback(const bdNodeId *id, std::string key, uint32_t status)
+int bdDebugCallback::dhtValueCallback(const bdId *id, std::string key, uint32_t status)
 {
+	/* remove unused parameter warnings */
+	(void) key;
+	(void) status;
+
+#ifdef DEBUG_MGR
 	std::cerr << "bdDebugCallback::dhtValueCallback() Id: ";
-	bdStdPrintNodeId(std::cerr, id);
+#endif
+	bdStdPrintId(std::cerr, id);
+#ifdef DEBUG_MGR
 	std::cerr << " key: " << key;
 	std::cerr << " status: " << std::hex << status << std::dec << std::endl;
+#endif
 
 	return 1;
 }
+
+
+
+
+
+/******************* Connection Stuff ********************/
+
+
+
+bool bdNodeManager::ConnectionRequest(struct sockaddr_in *laddr, bdNodeId *target, uint32_t mode, uint32_t delay, uint32_t start)
+{
+	std::cerr << "bdNodeManager::ConnectionRequest()";
+	std::cerr << std::endl;
+
+	return mConnMgr->requestConnection(laddr, target, mode, delay, start);
+}
+
+void bdNodeManager::ConnectionAuth(bdId *srcId, bdId *proxyId, bdId *destId, uint32_t mode, uint32_t loc, uint32_t bandwidth, uint32_t delay, uint32_t answer)
+{
+	std::cerr << "bdNodeManager::ConnectionAuth()";
+	std::cerr << std::endl;
+
+	if (answer == BITDHT_CONNECT_ANSWER_OKAY)
+	{
+		mConnMgr->AuthConnectionOk(srcId, proxyId, destId, mode, loc, bandwidth, delay);
+	}
+	else
+	{
+		mConnMgr->AuthConnectionNo(srcId, proxyId, destId, mode, loc, answer);
+	}
+}
+
+void bdNodeManager::ConnectionOptions(uint32_t allowedModes, uint32_t flags)
+{
+	mConnMgr->setConnectionOptions(allowedModes, flags);
+}
+
+
+        /***** Connections Requests *****/
+
+        // Overloaded from bdnode for external node callback.
+void bdNodeManager::callbackConnect(bdId *srcId, bdId *proxyId, bdId *destId, int mode, int point, int param, int cbtype, int errcode)
+{
+	std::cerr << "bdNodeManager::callbackConnect()";
+	std::cerr << std::endl;
+
+#ifdef DEBUG_MGR
+#endif
+        /* search list */
+        std::list<BitDhtCallback *>::iterator it;
+        for(it = mCallbacks.begin(); it != mCallbacks.end(); it++)
+        {
+                (*it)->dhtConnectCallback(srcId, proxyId, destId, mode, point, param, cbtype, errcode);
+        }
+        return;
+}
+
+int bdDebugCallback::dhtConnectCallback(const bdId *srcId, const bdId *proxyId, const bdId *destId,
+		uint32_t mode, uint32_t point, uint32_t param, uint32_t cbtype, uint32_t errcode)
+{
+	/* remove unused parameter warnings */
+	(void) srcId;
+	(void) proxyId;
+	(void) destId;
+	(void) mode;
+	(void) point;
+	(void) param;
+	(void) cbtype;
+	(void) errcode;
+
+#ifdef DEBUG_MGR
+	std::cerr << "bdDebugCallback::dhtConnectCallback() Type: " << cbtype;
+	std::cerr << " errCode: " << errcode;
+	std::cerr << " srcId: ";
+	bdStdPrintId(std::cerr, srcId);
+	std::cerr << " proxyId: ";
+	bdStdPrintId(std::cerr, proxyId);
+	std::cerr << " destId: ";
+	bdStdPrintId(std::cerr, destId);
+	std::cerr << " mode: " << mode;
+	std::cerr << " param: " << param;
+	std::cerr << " point: " << point << std::endl;
+#endif
+
+	return 1;
+}
+
+
+int bdDebugCallback::dhtInfoCallback(const bdId *id, uint32_t type, uint32_t flags, std::string info)
+{
+	/* remove unused parameter warnings */
+	(void) id;
+	(void) type;
+	(void) flags;
+	(void) info;
+
+#ifdef DEBUG_MGR
+	std::cerr << "bdDebugCallback::dhtInfoCallback() Type: " << type;
+	std::cerr << " Id: ";
+	bdStdPrintId(std::cerr, id);
+	std::cerr << " flags: " << flags;
+	std::cerr << " info: " << info;
+	std::cerr << std::endl;
+#endif
+
+	return 1;
+}
+
 
 

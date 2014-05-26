@@ -27,6 +27,7 @@
 #include "bitdht/bdpeer.h"
 #include "bitdht/bdquery.h"
 #include "udp/udpbitdht.h"
+#include <unistd.h>
 
 #define N_PEERS_TO_ADD 10000
 #define N_PEERS_TO_PRINT 1000

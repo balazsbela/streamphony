@@ -24,6 +24,7 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 #include <string.h>
 #include "bitdht/bencode.h"
 #include "bitdht/bdmsgs.h"
@@ -39,7 +40,7 @@ int get_peers_message();
 int response_peers_message();
 int response_closestnodes_message();
 
-	/*	
+	/*
 ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
 bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
 	*/
@@ -53,14 +54,14 @@ bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
 
 int bitdht_create_ping_msg(bdToken *tid, bdNodeId *id, char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_create_ping_msg()\n");
 #endif
 
 	be_node *dict = be_create_dict();
 	be_node *iddict = be_create_dict();
 	be_node *idnode = be_create_str_wlen((char *) id->data, BITDHT_KEY_LEN);
-	
+
 	be_add_keypair(iddict, "id", idnode);
 
 	be_node *pingnode = be_create_str("ping");
@@ -82,7 +83,7 @@ int bitdht_create_ping_msg(bdToken *tid, bdNodeId *id, char *msg, int avail)
 	be_free(dict);
 
 	return blen;
-	
+
 
 }
 
@@ -92,10 +93,10 @@ Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
 bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
 	*/
 
-int bitdht_response_ping_msg(bdToken *tid, bdNodeId *id, bdToken *vid, 
+int bitdht_response_ping_msg(bdToken *tid, bdNodeId *id, bdToken *vid,
 					char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_response_ping_msg()\n");
 #endif
 
@@ -134,10 +135,10 @@ bencoded = d1:ad2:id20:abcdefghij01234567896:target20:mnopqrstuvwxyz123456e1:q9:
 	*/
 
 
-int bitdht_find_node_msg(bdToken *tid, bdNodeId *id, bdNodeId *target, 
+int bitdht_find_node_msg(bdToken *tid, bdNodeId *id, bdNodeId *target,
 					char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_find_node_msg()\n");
 #endif
 
@@ -177,10 +178,10 @@ Response = {"t":"aa", "y":"r", "r": {"id":"0123456789abcdefghij", "nodes": "def4
 bencoded = d1:rd2:id20:0123456789abcdefghij5:nodes9:def456...e1:t2:aa1:y1:re
 	*/
 
-int bitdht_resp_node_msg(bdToken *tid, bdNodeId *id, std::list<bdId> &nodes, 
+int bitdht_resp_node_msg(bdToken *tid, bdNodeId *id, std::list<bdId> &nodes,
 					char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_resp_node_msg()\n");
 #endif
 
@@ -222,10 +223,10 @@ get_peers Query = {"t":"aa", "y":"q", "q":"get_peers", "a": {"id":"abcdefghij012
 bencoded = d1:ad2:id20:abcdefghij01234567899:info_hash20:mnopqrstuvwxyz123456e1:q9:get_peers1:t2:aa1:y1:qe
 	*/
 
-int bitdht_get_peers_msg(bdToken *tid, bdNodeId *id, bdNodeId *info_hash, 
+int bitdht_get_peers_msg(bdToken *tid, bdNodeId *id, bdNodeId *info_hash,
 					char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_get_peers_msg()\n");
 #endif
 
@@ -264,11 +265,11 @@ Response with peers = {"t":"aa", "y":"r", "r": {"id":"abcdefghij0123456789", "to
 bencoded = d1:rd2:id20:abcdefghij01234567895:token8:aoeusnth6:valuesl6:axje.u6:idhtnmee1:t2:aa1:y1:re
 	*/
 
-int bitdht_peers_reply_hash_msg(bdToken *tid, bdNodeId *id, 
+int bitdht_peers_reply_hash_msg(bdToken *tid, bdNodeId *id,
 		bdToken *token, std::list<std::string> &values,
 					char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_peers_reply_hash_msg()\n");
 #endif
 
@@ -279,7 +280,9 @@ int bitdht_peers_reply_hash_msg(bdToken *tid, bdNodeId *id,
 
         be_node *tidnode = be_create_str_wlen((char *) tid->data, tid->len);
         be_node *tokennode = be_create_str_wlen((char *) token->data, token->len);
-	be_node *valuesnode = makeCompactPeerIds(values);
+        // FIXME: this might be truncating the strings to the size of peerIDs
+        // that would be back as i'm passing the 'value' data back in reply_hash
+        be_node *valuesnode = makeCompactPeerIds(values);
 
         be_node *yqrnode = be_create_str("r");
 
@@ -310,11 +313,11 @@ bencoded = d1:rd2:id20:abcdefghij01234567895:nodes9:def456...5:token8:aoeusnthe1
 	**/
 
 
-int bitdht_peers_reply_closest_msg(bdToken *tid, bdNodeId *id, 
-				bdToken *token, std::list<bdId> &nodes, 
+int bitdht_peers_reply_closest_msg(bdToken *tid, bdNodeId *id,
+				bdToken *token, std::list<bdId> &nodes,
 					char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_peers_reply_closest_msg()\n");
 #endif
 
@@ -350,6 +353,89 @@ int bitdht_peers_reply_closest_msg(bdToken *tid, bdNodeId *id,
 
 
 
+// post_hash
+int bitdht_post_hash_msg(bdToken *transId,
+                         bdNodeId *id, bdNodeId *key,
+                         std::string hash, std::string secret,
+                         char *const msg, int avail)
+{
+    fprintf(stderr, "bitdht_post_hash_msg()\n");
+
+    be_node *dict = be_create_dict();
+    be_node *iddict = be_create_dict();
+
+    be_node *idnode = be_create_str_wlen((char *) id->data, BITDHT_KEY_LEN);
+    be_node *tidnode = be_create_str_wlen((char *) transId->data,
+                                          BITDHT_KEY_LEN);
+    be_node *hashnode = be_create_str_wlen((char *) key->data, BITDHT_KEY_LEN);
+    be_node *value = be_create_str_wlen((char *) hash.data(), hash.size());
+    be_node *besecret = be_create_str_wlen((char *) secret.data(),
+                                           secret.size());
+
+    be_add_keypair(iddict, "id", idnode);
+    be_add_keypair(iddict, "key", hashnode);
+    be_add_keypair(iddict, "value", value);
+    be_add_keypair(iddict, "secret", besecret);
+
+    be_node *postHash = be_create_str("post_hash");
+    be_node *qynode = be_create_str("q");
+
+    be_add_keypair(dict, "a", iddict);
+
+    be_add_keypair(dict, "q", postHash);
+    be_add_keypair(dict, "t", tidnode);
+    be_add_keypair(dict, "y", qynode);
+
+#ifdef DEBUG_MSG_DUMP
+    /* dump answer */
+    be_dump(dict);
+#endif
+
+    int blen = be_encode(dict, msg, avail);
+    be_free(dict);
+
+    return blen;
+}
+
+
+int bitdht_reply_post_hash_msg(bdToken *trandId, bdNodeId *id, bool successful,
+                               char *msg, int avail)
+{
+#ifdef DEBUG_MSGS
+    fprintf(stderr, "bitdht_reply_post_hash_msg()\n");
+#endif
+        be_node *dict = be_create_dict();
+
+        be_node *iddict = be_create_dict();
+
+        be_node *idnode = be_create_str_wlen((char *) id->data,
+                                             BITDHT_KEY_LEN);
+        be_node *postHashReply = be_create_str_wlen("post_hash_reply", 15);
+        be_node *trandIdnode = be_create_str_wlen((char *) trandId->data,
+                                                  trandId->len);
+        be_node *yqrnode = be_create_str("r");
+
+        be_node *successfulNode = be_create_int(int(successful));
+        be_add_keypair(iddict, "successful", successfulNode);
+
+
+        be_add_keypair(iddict, "id", idnode);
+        be_add_keypair(iddict, "phr", postHashReply);
+        be_add_keypair(dict, "r", iddict);
+        be_add_keypair(dict, "t", trandIdnode);
+        be_add_keypair(dict, "y", yqrnode);
+
+#ifdef DEBUG_MSG_DUMP
+        /* dump answer */
+    be_dump(dict);
+#endif
+
+    int blen = be_encode(dict, msg, avail);
+    be_free(dict);
+
+    return blen;
+}
+
 /**** FINAL TWO MESSAGES! ***/
 
 /****
@@ -360,7 +446,7 @@ bencoded = d1:ad2:id20:abcdefghij01234567899:info_hash20:mnopqrstuvwxyz1234564:p
 
 int bitdht_announce_peers_msg(bdToken *tid, bdNodeId *id, bdNodeId *info_hash, uint32_t port, bdToken *token, char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_announce_peers_msg()\n");
 #endif
 
@@ -372,7 +458,7 @@ int bitdht_announce_peers_msg(bdToken *tid, bdNodeId *id, bdNodeId *info_hash, u
 	be_node *hashnode = be_create_str_wlen((char *) info_hash->data, BITDHT_KEY_LEN);
 	be_node *portnode = be_create_int(port);
 	be_node *tokennode = be_create_str_wlen((char *) token->data, token->len);
-	
+
 	be_add_keypair(iddict, "id", idnode);
 	be_add_keypair(iddict, "info_hash", hashnode);
 	be_add_keypair(iddict, "port", portnode);
@@ -410,10 +496,10 @@ bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
  * NB: This is the same as a PONG msg!
  ***/
 
-int bitdht_reply_announce_msg(bdToken *tid, bdNodeId *id, 
+int bitdht_reply_announce_msg(bdToken *tid, bdNodeId *id,
 					char *msg, int avail)
 {
-#ifdef DEBUG_MSGS 
+#ifdef DEBUG_MSGS
 	fprintf(stderr, "bitdht_response_ping_msg()\n");
 #endif
 
@@ -472,7 +558,7 @@ be_node *beMsgGetDictNode(be_node *node, const char *key)
 
 int beMsgMatchString(be_node *n, const char *str, int len)
 {
-	if (n->type != BE_STR)	
+	if (n->type != BE_STR)
 	{
 		return 0;
 	}
@@ -494,11 +580,15 @@ int beMsgMatchString(be_node *n, const char *str, int len)
 uint32_t beMsgGetY(be_node *n)
 {
 	be_node *val = beMsgGetDictNode(n, "y");
-	if (val->type != BE_STR)	
+
+	if(val == NULL)
+		return BE_Y_UNKNOWN ;
+
+	if (val->type != BE_STR)
 	{
 		return BE_Y_UNKNOWN;
 	}
-		
+
 	if (val->val.s[0] == 'q')
 	{
 		return BE_Y_Q;
@@ -515,18 +605,18 @@ uint32_t beMsgGetY(be_node *n)
 
 uint32_t beMsgType(be_node *n)
 {
-	/* check for 
+	/* check for
 	 * y: q or r
 	 */
 	uint32_t beY = beMsgGetY(n);
 
-#ifdef DEBUG_MSG_TYPE 
+#ifdef DEBUG_MSG_TYPE
 	std::cerr << "bsMsgType() beY: " << beY << std::endl;
 #endif
 
 	if (beY == BE_Y_UNKNOWN)
 	{
-#ifdef DEBUG_MSG_TYPE 
+#ifdef DEBUG_MSG_TYPE
 		std::cerr << "bsMsgType() UNKNOWN MSG TYPE" << std::endl;
 #endif
 
@@ -535,40 +625,50 @@ uint32_t beMsgType(be_node *n)
 
 	if (beY == BE_Y_Q) /* query */
 	{
-#ifdef DEBUG_MSG_TYPE 
+#ifdef DEBUG_MSG_TYPE
 		std::cerr << "bsMsgType() QUERY MSG TYPE" << std::endl;
 #endif
-	        be_node *query = beMsgGetDictNode(n, "q");
+		be_node *query = beMsgGetDictNode(n, "q");
+
+		if(query == NULL)
+			return BITDHT_MSG_TYPE_UNKNOWN;
 
 		if (beMsgMatchString(query, "ping", 4))
 		{
-#ifdef DEBUG_MSG_TYPE 
+#ifdef DEBUG_MSG_TYPE
 			std::cerr << "bsMsgType() QUERY:ping MSG TYPE" << std::endl;
 #endif
 			return BITDHT_MSG_TYPE_PING;
 		}
 		else if (beMsgMatchString(query, "find_node", 9))
 		{
-#ifdef DEBUG_MSG_TYPE 
+#ifdef DEBUG_MSG_TYPE
 			std::cerr << "bsMsgType() QUERY:find_node MSG TYPE" << std::endl;
 #endif
 			return BITDHT_MSG_TYPE_FIND_NODE;
 		}
 		else if (beMsgMatchString(query, "get_peers", 9))
 		{
-#ifdef DEBUG_MSG_TYPE 
+#ifdef DEBUG_MSG_TYPE
 			std::cerr << "bsMsgType() QUERY:get_peers MSG TYPE" << std::endl;
 #endif
 			return BITDHT_MSG_TYPE_GET_HASH;
 		}
-		else if (beMsgMatchString(query, "announce_peer", 13))
+		else if (beMsgMatchString(query, "post_hash", 9))
 		{
-#ifdef DEBUG_MSG_TYPE 
-			std::cerr << "bsMsgType() QUERY:announce_peer MSG TYPE" << std::endl;
+#ifdef DEBUG_MSG_TYPE
+			std::cerr << "bsMsgType() QUERY:post_hash MSG TYPE" << std::endl;
 #endif
 			return BITDHT_MSG_TYPE_POST_HASH;
 		}
-#ifdef DEBUG_MSG_TYPE 
+		else if (beMsgMatchString(query, "connect", 7))
+		{
+#ifdef DEBUG_MSG_TYPE
+			std::cerr << "bsMsgType() QUERY:connect MSG TYPE" << std::endl;
+#endif
+			return BITDHT_MSG_TYPE_CONNECT;
+		}
+#ifdef DEBUG_MSG_TYPE
 		std::cerr << "bsMsgType() QUERY:UNKNOWN MSG TYPE, dumping dict" << std::endl;
         	/* dump answer */
         	be_dump(n);
@@ -578,21 +678,23 @@ uint32_t beMsgType(be_node *n)
 
 	if (beY != BE_Y_R)
 	{
-#ifdef DEBUG_MSG_TYPE 
+#ifdef DEBUG_MSG_TYPE
 		std::cerr << "bsMsgType() UNKNOWN2 MSG TYPE" << std::endl;
 #endif
 		return BITDHT_MSG_TYPE_UNKNOWN;
 	}
 
-#ifdef DEBUG_MSG_TYPE 
+#ifdef DEBUG_MSG_TYPE
 		std::cerr << "bsMsgType() REPLY MSG TYPE" << std::endl;
 #endif
 
-	/* otherwise a reply or - invalid 
+	/* otherwise a reply or - invalid
 	pong {"id":"mnopqrstuvwxyz123456"}
 	reply_neigh { "id":"0123456789abcdefghij", "nodes": "def456..."}}
-	reply_hash { "id":"abcdefghij0123456789", "token":"aoeusnth", "values": ["axje.u", "idhtnm"]}}
-	reply_near { "id":"abcdefghij0123456789", "token":"aoeusnth", "nodes": "def456..."}
+	reply_hash { "id":"abcdefghij0123456789", "token":"aoeusnth",
+                 "values": ["axje.u", "idhtnm"]}}
+	reply_near { "id":"abcdefghij0123456789", "token":"aoeusnth",
+                 "nodes": "def456..."}
 	*/
 
 	be_node *reply = beMsgGetDictNode(n, "r");
@@ -600,22 +702,27 @@ uint32_t beMsgType(be_node *n)
 	{
 		return BITDHT_MSG_TYPE_UNKNOWN;
 	}
-	
+
 	be_node *id = beMsgGetDictNode(reply, "id");
 	be_node *token = beMsgGetDictNode(reply, "token");
 	be_node *values = beMsgGetDictNode(reply, "values");
 	be_node *nodes = beMsgGetDictNode(reply, "nodes");
+    be_node *postHashReply = beMsgGetDictNode(reply, "phr");
 
 	if (!id)
 	{
 		return BITDHT_MSG_TYPE_UNKNOWN;
 	}
-	
+
 	if (token && values)
 	{
-		/* reply hash */
+		/* reply get hash */
 		return BITDHT_MSG_TYPE_REPLY_HASH;
 	}
+    else if (postHashReply)
+    {
+        return BITDHT_MSG_TYPE_REPLY_POST_HASH;
+    }
 	else if (token && nodes)
 	{
 		/* reply near */
@@ -631,21 +738,42 @@ uint32_t beMsgType(be_node *n)
 		/* pong */
 		return BITDHT_MSG_TYPE_PONG;
 	}
-	/* TODO reply_post */
-	//return BITDHT_MSG_TYPE_REPLY_POST;
 	/* can't get here! */
 	return BITDHT_MSG_TYPE_UNKNOWN;
 }
 
 /* extract specific types here */
 
+int beMsgGetData(be_node *n, char *hash, uint &hashlen)
+{
+    if (n->type != BE_STR)
+    {
+        return 0;
+    }
+    uint len = be_str_len(n);
+
+    if(len > hashlen)
+        return 0;
+
+    for(uint i = 0; i < len; i++)
+    {
+        hash[i] = n->val.s[i];
+    }
+    hashlen = len;
+    return 1;
+}
+
 int beMsgGetToken(be_node *n, bdToken &token)
 {
-	if (n->type != BE_STR)	
+	if (n->type != BE_STR)
 	{
 		return 0;
 	}
         int len = be_str_len(n);
+
+	if(len > BITDHT_TOKEN_MAX_LEN)
+		return 0 ;
+
 	for(int i = 0; i < len; i++)
 	{
 		token.data[i] = n->val.s[i];
@@ -656,7 +784,7 @@ int beMsgGetToken(be_node *n, bdToken &token)
 
 int beMsgGetNodeId(be_node *n, bdNodeId &nodeId)
 {
-	if (n->type != BE_STR)	
+	if (n->type != BE_STR)
 	{
 		return 0;
 	}
@@ -681,7 +809,7 @@ be_node *makeCompactNodeIdString(std::list<bdId> &nodes)
 	{
 		cni += encodeCompactNodeId(&(*it));
 	}
-		
+
 
 	be_node *cninode = be_create_str_wlen((char *) cni.c_str(), len);
 	return cninode;
@@ -721,6 +849,28 @@ int beMsgGetListBdIds(be_node *n, std::list<bdId> &nodes)
 		}
 	}
         return 1;
+}
+
+int beMsgGetBdId(be_node *n, bdId &id)
+{
+	/* extract the string pointer, and size */
+	/* split into parts */
+
+        if (n->type != BE_STR)
+        {
+                return 0;
+        }
+
+	int len = be_str_len(n);
+	if (len < BITDHT_COMPACTNODEID_LEN)
+	{
+		return 0;
+	}
+	if (decodeCompactNodeId(&id, n->val.s, BITDHT_COMPACTNODEID_LEN))
+	{
+        	return 1;
+	}
+	return 0;
 }
 
 std::string encodeCompactNodeId(bdId *id)
@@ -778,8 +928,8 @@ int decodeCompactPeerId(struct sockaddr_in *addr, char *enc, int len)
 
 	uint32_t *ip = (uint32_t *) (enc);
 	uint16_t *port = (uint16_t *) (&enc[4]);
-	addr->sin_addr.s_addr = (*ip); 
-	addr->sin_port = (*port); 
+	addr->sin_addr.s_addr = (*ip);
+	addr->sin_port = (*port);
 	addr->sin_family = AF_INET;
 
 	return 1;
@@ -795,11 +945,11 @@ int beMsgGetListStrings(be_node *n, std::list<std::string> &values)
 	for(int i = 0; n->val.l[i] != NULL; i++)
 	{
 		be_node *val = n->val.l[i];
-		if (val->type != BE_STR)	
-		{
+
+		if (val == NULL || val->type != BE_STR)
 			return 0;
-		}
-        	int len = be_str_len(val);
+
+		int len = be_str_len(val);
 		std::string str;
 		str.append(val->val.s, len);
 		values.push_back(str);
@@ -810,12 +960,226 @@ int beMsgGetListStrings(be_node *n, std::list<std::string> &values)
 
 int beMsgGetUInt32(be_node *n, uint32_t *port)
 {
-	if (n->type != BE_INT)	
+	if (n->type != BE_INT)
 	{
 		return 0;
 	}
 	*port = n->val.i;
 	return 1;
 }
+
+
+
+
+
+
+
+/********************************************************************************************************************
+ * CONNECTION EXTENSIONS
+ *
+ */
+
+	/*
+ping Query = {"t":"aa", "y":"q", "q":"ping", "a":{"id":"abcdefghij0123456789"}}
+bencoded = d1:ad2:id20:abcdefghij0123456789e1:q4:ping1:t2:aa1:y1:qe
+	*/
+
+	/*
+Response = {"t":"aa", "y":"r", "r": {"id":"mnopqrstuvwxyz123456"}}
+bencoded = d1:rd2:id20:mnopqrstuvwxyz123456e1:t2:aa1:y1:re
+	*/
+
+        /*
+find_node Query = {"t":"aa", "y":"q", "q":"find_node", "a": {"id":"abcdefghij0123456789", "target":"mnopqrstuvwxyz123456"}}
+bencoded = d1:ad2:id20:abcdefghij01234567896:target20:mnopqrstuvwxyz123456e1:q9:find_node1:t2:aa1:y1:qe
+        */
+
+#if 0
+int bitdht_find_node_msg(bdToken *tid, bdNodeId *id, bdNodeId *target,
+                                        char *msg, int avail)
+{
+#ifdef DEBUG_MSGS
+        fprintf(stderr, "bitdht_find_node_msg()\n");
+#endif
+
+        be_node *dict = be_create_dict();
+
+        be_node *iddict = be_create_dict();
+        be_node *idnode = be_create_str_wlen((char *) id->data, BITDHT_KEY_LEN);
+        be_node *targetnode = be_create_str_wlen((char *) target->data, BITDHT_KEY_LEN);
+
+        be_node *tidnode = be_create_str_wlen((char *) tid->data, tid->len);
+        be_node *yqrnode = be_create_str("q");
+        be_node *findnode = be_create_str("find_node");
+
+        be_add_keypair(iddict, "id", idnode);
+        be_add_keypair(iddict, "target", targetnode);
+        be_add_keypair(dict, "a", iddict);
+
+        be_add_keypair(dict, "t", tidnode);
+        be_add_keypair(dict, "y", yqrnode);
+        be_add_keypair(dict, "q", findnode);
+
+#ifdef DEBUG_MSG_DUMP
+        /* dump answer */
+        be_dump(dict);
+#endif
+
+        int blen = be_encode(dict, msg, avail);
+        be_free(dict);
+
+        return blen;
+}
+#endif
+
+/****
+ * Thinking about the format of this message.
+ * id: ownId is stanard in all other messages, so should keep the same!.
+ * src:
+ * target:
+ * mode: d,p or r
+ *
+ * A -> B -> C
+ * direct:  A ------> B
+ *     ---> id:A src:A target:B mode:d
+ *     <--- id:B src:A target:B mode:d a:OK
+ *
+ * proxy:   A ------> B -------> C
+ *     A->B id:A src:A target:C mode:p q
+ *
+ * a)
+ *     B->A id:B src:A target:C mode:p r:NOK
+ *
+ * b)
+ *     B->C id:B src:A target:C mode:p q
+ *     C->B id:C src:A target:C mode:p r:NOK
+ *     B->A id:B src:A target:C mode:p r:NOK
+ *
+ * c)
+ *     B->C id:B src:A target:C mode:p q
+ *     C->B id:C src:A target:C mode:p r:OK
+ *     B->A id:B src:A target:C mode:p r:OK
+ *	connect happens.
+ * Dropped packets will affect this!
+ *
+ *
+ * REQUIRED BITS FOR A MESSAGE
+ * 1) DIRECT
+ *     -> REQUEST,  ownId, targetId, transId, mode.
+ *     -> RESPONSE, ownId, targetId, transId, mode, answer.
+ *
+ * 2) PROXY
+ */
+
+
+int bitdht_connect_genmsg(bdToken *tid, bdNodeId *id, int msgtype, bdId *src, bdId *dest, int mode, int param, int status, char *msg, int avail)
+{
+#ifdef DEBUG_MSGS
+	fprintf(stderr, "bitdht_connect_genmsg()\n");
+#endif
+
+	be_node *dict = be_create_dict();
+
+	be_node *iddict = be_create_dict();
+
+	be_node *idnode = be_create_str_wlen((char *) id->data, BITDHT_KEY_LEN);
+
+	std::string srcEnc = encodeCompactNodeId(src);
+	std::string destEnc = encodeCompactNodeId(dest);
+
+	be_node *srcnode = be_create_str_wlen(srcEnc.c_str(), BITDHT_COMPACTNODEID_LEN);
+	be_node *destnode = be_create_str_wlen(destEnc.c_str(), BITDHT_COMPACTNODEID_LEN);
+	be_node *typenode = be_create_int(msgtype);
+	be_node *statusnode = be_create_int(status);
+	be_node *modenode = be_create_int(mode);
+	be_node *paramnode = be_create_int(param);
+
+	be_node *tidnode = be_create_str_wlen((char *) tid->data, tid->len);
+	be_node *yqrnode = be_create_str("q");
+	be_node *cmdnode = be_create_str("connect");
+
+	be_add_keypair(iddict, "id", idnode);
+	be_add_keypair(iddict, "src", srcnode);
+	be_add_keypair(iddict, "dest", destnode);
+	be_add_keypair(iddict, "mode", modenode);
+	be_add_keypair(iddict, "param", paramnode);
+	be_add_keypair(iddict, "status", statusnode);
+	be_add_keypair(iddict, "type", typenode);
+
+	be_add_keypair(dict, "a", iddict);
+
+	be_add_keypair(dict, "t", tidnode);
+	be_add_keypair(dict, "y", yqrnode);
+	be_add_keypair(dict, "q", cmdnode);
+
+#ifdef DEBUG_MSG_DUMP
+	/* dump answer */
+	be_dump(dict);
+#endif
+
+	int blen = be_encode(dict, msg, avail);
+	be_free(dict);
+
+	return blen;
+}
+
+
+
+bool bitdht_msgtype(uint32_t msg_type, std::string &name)
+{
+	switch(msg_type)
+	{
+		case BITDHT_MSG_TYPE_PING:
+			name = "PING";
+			break;
+		case BITDHT_MSG_TYPE_PONG:
+			name = "PONG";
+			break;
+		case BITDHT_MSG_TYPE_FIND_NODE:
+			name = "FIND_NODE";
+			break;
+		case BITDHT_MSG_TYPE_REPLY_NODE:
+			name = "REPLY_NODE";
+			break;
+		case BITDHT_MSG_TYPE_GET_HASH:
+			name = "GET_HASH";
+			break;
+		case BITDHT_MSG_TYPE_REPLY_HASH:
+			name = "REPLY_HASH";
+			break;
+		case BITDHT_MSG_TYPE_REPLY_NEAR:
+			name = "REPLY_NEAR";
+			break;
+		case BITDHT_MSG_TYPE_POST_HASH:
+			name = "POST_HASH";
+			break;
+		case BITDHT_MSG_TYPE_REPLY_POST:
+			name = "REPLY_POST";
+			break;
+
+		case BITDHT_MSG_TYPE_CONNECT:
+			name = "CONNECT";
+			break;
+		case BITDHT_MSG_TYPE_CONNECT_REQUEST:
+			name = "CONNECT_REQUEST";
+			break;
+		case BITDHT_MSG_TYPE_CONNECT_REPLY:
+			name = "CONNECT_REPLY";
+			break;
+		case BITDHT_MSG_TYPE_CONNECT_START:
+			name = "CONNECT_START";
+			break;
+		case BITDHT_MSG_TYPE_CONNECT_ACK:
+			name = "CONNECT_ACK";
+			break;
+		default:
+			name = "UNKNOWN";
+			return false;
+			break;
+	}
+
+	return true;
+}
+
 
 

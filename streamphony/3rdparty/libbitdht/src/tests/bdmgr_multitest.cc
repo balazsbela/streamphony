@@ -23,24 +23,26 @@
  *
  */
 
-#include <unistd.h>
 
 #include "bitdht/bdmanager.h"
 #include "bitdht/bdstddht.h"
 #include "udp/udplayer.h"
+#include "util/bdrandom.h"
 
 #include <stdlib.h>
+#include <unistd.h>
+
 
 /**********************************************************************************
  * tests of multi bdnodes all connected together.
  * in these cases, the networking step is shortcut and the ip addresses ignored.
  * instead the port number is used as an index to peers.
  *
- * test1() 
+ * test1()
  *     Small cross seeding, and static list of peers.
  *     Set it going - and see what happens.
  */
- 
+
 std::map<bdId, bdNodeManager *> nodes;
 std::map<struct sockaddr_in, bdId> addrIdx;
 
@@ -86,21 +88,21 @@ int main(int argc, char **argv)
 	{
 		for(j = 0; j < 2; j++)
 		{
-			int peeridx = rand() % n_nodes;
-			for(i = 0, it = nodes.begin(); 
+			int peeridx = bdRandom::random_u32() % n_nodes;
+			for(i = 0, it = nodes.begin();
 				(i < peeridx) && (it != nodes.end()); i++, it++)
 			{
 				/* empty */
 			}
 			if (it != nodes.end())
 			{
-				nit->second->addPotentialPeer((bdId *) &(it->first));
+				nit->second->addPotentialPeer((bdId *) &(it->first), NULL);
 			}
 		}
 	}
 
 	/* ready to run */
-	
+
 	std::cerr << "bdmgr_multitest() Simulation Time....." << std::endl;
 	i = 0;
 	while(time(NULL) < starttime + sim_time)
@@ -150,7 +152,7 @@ int main(int argc, char **argv)
 		for(it = nodes.begin(), j = 0; it != nodes.end(); it++, j++)
 		{
 			/* tick */
-			std::cerr << "bdmgr_multitest() Ticking peer: " << j << std::endl;
+			// std::cerr << "bdmgr_multitest() Ticking peer: " << j << std::endl;
 			it->second->iteration();
 		}
 

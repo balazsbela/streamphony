@@ -26,7 +26,6 @@
 #include "udp/udpstack.h"
 
 #include <iostream>
-#include <sstream>
 #include <iomanip>
 #include <string.h>
 #include <stdlib.h>
@@ -47,10 +46,50 @@ UdpStack::UdpStack(struct sockaddr_in &local)
 	return;
 }
 
+UdpStack::UdpStack(int testmode, struct sockaddr_in &local)
+	:udpLayer(NULL), laddr(local)
+{
+	std::cerr << "UdpStack::UdpStack() Evoked in TestMode" << std::endl;
+	if (testmode == UDP_TEST_LOSSY_LAYER)
+	{
+		std::cerr << "UdpStack::UdpStack() Installing LossyUdpLayer" << std::endl;
+		udpLayer = new LossyUdpLayer(this, laddr, UDP_TEST_LOSSY_FRAC);
+	}
+	else if (testmode == UDP_TEST_RESTRICTED_LAYER)
+	{
+		std::cerr << "UdpStack::UdpStack() Installing RestrictedUdpLayer" << std::endl;
+		udpLayer = new RestrictedUdpLayer(this, laddr);
+	}
+	else if (testmode == UDP_TEST_TIMED_LAYER)
+	{
+		std::cerr << "UdpStack::UdpStack() Installing TimedUdpLayer" << std::endl;
+		udpLayer = new TimedUdpLayer(this, laddr);
+	}
+	else
+	{
+		std::cerr << "UdpStack::UdpStack() Installing Standard UdpLayer" << std::endl;
+		// standard layer 
+		openSocket();
+	}
+	return;
+}
+
+UdpLayer *UdpStack::getUdpLayer() /* for testing only */
+{
+	return udpLayer;
+}
+
+bool    UdpStack::getLocalAddress(struct sockaddr_in &local)
+{
+	local = laddr;
+	return true;
+}
+
 bool    UdpStack::resetAddress(struct sockaddr_in &local)
 {
 	std::cerr << "UdpStack::resetAddress(" << local << ")";
 	std::cerr << std::endl;
+	laddr = local;
 
 	return udpLayer->reset(local);
 }
@@ -84,7 +123,7 @@ int UdpStack::recvPkt(void *data, int size, struct sockaddr_in &from)
 	return 1;
 }
 
-int  UdpStack::sendPkt(const void *data, int size, struct sockaddr_in &to, int ttl)
+int  UdpStack::sendPkt(const void *data, int size, const struct sockaddr_in &to, int ttl)
 {
 	/* print packet information */
 #ifdef DEBUG_UDP_RECV
@@ -198,7 +237,7 @@ UdpSubReceiver::UdpSubReceiver(UdpPublisher *pub)
 	return; 
 }
 
-int  UdpSubReceiver::sendPkt(const void *data, int size, struct sockaddr_in &to, int ttl)
+int  UdpSubReceiver::sendPkt(const void *data, int size, const struct sockaddr_in &to, int ttl)
 {
 	/* print packet information */
 #ifdef DEBUG_UDP_RECV

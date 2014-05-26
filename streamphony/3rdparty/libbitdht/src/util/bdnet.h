@@ -27,12 +27,11 @@
  */
 
 #include <inttypes.h>
+#include <string>
 
 /********************************** WINDOWS/UNIX SPECIFIC PART ******************/
 #if defined(_WIN32) || defined(__MINGW32__)
 
-#include <windows.h>
-#include <winsock2.h>
 #include <ws2tcpip.h>
 
 #include <stdio.h> /* for ssize_t */
@@ -103,7 +102,9 @@ int bdnet_inet_aton(const char *name, struct in_addr *addr);
 /* check if we can modify the TTL on a UDP packet */
 int bdnet_checkTTL(int fd);
 
-
+void	bdsockaddr_clear(struct sockaddr_in *addr);
+/* thread-safe version of inet_ntoa */
+std::string bdnet_inet_ntoa(struct in_addr in);
 
 /* Extra stuff to declare for windows error handling (mimics unix errno)
  */
@@ -130,9 +131,13 @@ int bdnet_checkTTL(int fd);
  */
 
 #define EAGAIN          11
+#define EUSERS          87
+
+#define EHOSTDOWN       112
+
+#ifndef __MINGW64_VERSION_MAJOR
 #define EWOULDBLOCK     EAGAIN
 
-#define EUSERS          87
 #define ENOTSOCK        88
 
 #define EOPNOTSUPP      95 
@@ -146,10 +151,10 @@ int bdnet_checkTTL(int fd);
 
 #define ETIMEDOUT       10060 // value from pthread.h
 #define ECONNREFUSED    111
-#define EHOSTDOWN       112
 #define EHOSTUNREACH    113
 #define EALREADY        114
 #define EINPROGRESS     115
+#endif
 
 int     bdnet_w2u_errno(int error);
 
@@ -157,7 +162,9 @@ int     bdnet_w2u_errno(int error);
  * ms uses millisecs.
  * void Sleep(int ms);
  */
+#ifndef __MINGW64_VERSION_MAJOR
 int sleep(unsigned int sec);
+#endif
 int usleep(unsigned int usec);
 
 #endif // END of WINDOWS defines.

@@ -35,7 +35,7 @@
 #include "bitdht/bdiface.h"
 #include "bitdht/bdmanager.h"
 
-/* 
+/*
  * This implements a UdpSubReceiver class to allow the DHT to talk to the network.
  * The parser is very strict - and will try to not pick up anyone else's messages.
  *
@@ -43,9 +43,9 @@
  * This class is also a thread - enabling it to do callback etc.
  */
 
-// class BitDhtCallback defined in bdiface.h 
+// class BitDhtCallback defined in bdiface.h
 
-	
+
 class UdpBitDht: public UdpSubReceiver, public bdThread, public BitDhtInterface
 {
 	public:
@@ -57,26 +57,48 @@ virtual ~UdpBitDht();
 	/*********** External Interface to the World (BitDhtInterface) ************/
 
 	/***** Functions to Call down to bdNodeManager ****/
+
+        /* Friend Tracking */
+virtual void addBadPeer(const struct sockaddr_in &addr, uint32_t source, uint32_t reason, uint32_t age);
+virtual void updateKnownPeer(const bdId *id, uint32_t type, uint32_t flags);
+
 	/* Request DHT Peer Lookup */
 	/* Request Keyword Lookup */
 virtual	void addFindNode(bdNodeId *id, uint32_t mode);
 virtual	void removeFindNode(bdNodeId *id);
-virtual	void findDhtValue(bdNodeId *id, std::string key, uint32_t mode);
+virtual	void getHash(bdId &id, bdNodeId &key);
+virtual	void postHash(bdId &id, bdNodeId &key,
+                      std::string hash, std::string secret);
 
 	/***** Add / Remove Callback Clients *****/
 virtual	void addCallback(BitDhtCallback *cb);
 virtual	void removeCallback(BitDhtCallback *cb);
 
+        /***** Connections Requests *****/
+virtual bool ConnectionRequest(struct sockaddr_in *laddr, bdNodeId *target, uint32_t mode, uint32_t delay, uint32_t start);
+virtual void ConnectionAuth(bdId *srcId, bdId *proxyId, bdId *destId, uint32_t mode, uint32_t loc,
+											uint32_t bandwidth, uint32_t delay, uint32_t answer);
+virtual void ConnectionOptions(uint32_t allowedModes, uint32_t flags);
+virtual bool setAttachMode(bool on);
+
         /***** Get Results Details *****/
 virtual int getDhtPeerAddress(const bdNodeId *id, struct sockaddr_in &from);
 virtual int getDhtValue(const bdNodeId *id, std::string key, std::string &value);
+virtual int getDhtBucket(const int idx, bdBucket &bucket);
+
+virtual int getDhtQueries(std::map<bdNodeId, bdQueryStatus> &queries);
+virtual int getDhtQueryStatus(const bdNodeId *id, bdQuerySummary &query);
 
         /* stats and Dht state */
 virtual int startDht();
 virtual int stopDht();
-virtual int stateDht(); 
+virtual int stateDht();
+virtual int printDht();
 virtual uint32_t statsNetworkSize();
-virtual uint32_t statsBDVersionSize(); 
+virtual uint32_t statsBDVersionSize();
+virtual uint32_t setDhtMode(uint32_t dhtFlags);
+
+void getDataTransferred(uint32_t &read, uint32_t &write);
 
 	/******************* Internals *************************/
 	/***** Iteration / Loop Management *****/
@@ -94,9 +116,17 @@ virtual void run();
 
 	private:
 
+void clearDataTransferred();
+
 	bdMutex dhtMtx; /* for all class data (below) */
 	bdNodeManager *mBitDhtManager;
 	bdDhtFunctions *mFns;
+
+
+	uint32_t mReadBytes;
+	uint32_t mWriteBytes;
+
+
 };
 
 

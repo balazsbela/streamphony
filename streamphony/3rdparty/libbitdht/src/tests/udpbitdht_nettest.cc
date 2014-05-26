@@ -24,14 +24,13 @@
  */
 
 
-#include <unistd.h>
-#include <getopt.h>
 #include "udp/udpbitdht.h"
 #include "udp/udpstack.h"
 #include "bitdht/bdstddht.h"
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 /*******************************************************************
  * DHT test program.
@@ -74,8 +73,6 @@ int main(int argc, char **argv)
 	bool doThreadJoin = false;
 	int noQueries = 0;
 
-	srand(time(NULL));
-
 	while((c = getopt(argc, argv,"rjp:b:u:q:")) != -1)
 	{
 		switch (c)
@@ -102,7 +99,7 @@ int main(int argc, char **argv)
 					args(argv[0]);
 					return 1;
 				}
-					
+
 			}
 			break;
 			case 'b':
@@ -138,7 +135,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-				
+
 	bdDhtFunctions *fns = new bdStdDht();
 
 	bdNodeId id;

@@ -44,7 +44,6 @@
 
 void bdStdRandomNodeId(bdNodeId *id);
 void bdStdNodeIdFromArray(bdNodeId *id, const char* string);
-
 void bdStdZeroNodeId(bdNodeId *id);
 
 void bdStdRandomId(bdId *id);
@@ -54,12 +53,16 @@ int bdStdBucketDistance(const bdNodeId *a, const bdNodeId *b);
 
 void bdStdRandomMidId(const bdNodeId *target, const bdNodeId *other, bdNodeId *mid);
 
+int  bdStdLoadNodeId(bdNodeId *id, std::string input);
+
 void bdStdPrintId(std::ostream &out, const bdId *a);
+void bdStdPrintId(std::string &out, const bdId *a, bool append);
 void bdStdPrintNodeId(std::ostream &out, const bdNodeId *a);
+void bdStdPrintNodeId(std::string &out, const bdNodeId *a, bool append);
 
 std::string bdStdConvertToPrintable(std::string input);
 
-uint32_t bdStdLikelySameNode(const bdId*, const bdId*);
+//uint32_t bdStdSimilarNode(const bdId*, const bdId*);
 
 
 class bdStdDht: public bdDhtFunctions
@@ -69,20 +72,33 @@ class bdStdDht: public bdDhtFunctions
         bdStdDht();
         /* setup variables */
 virtual uint16_t bdNumBuckets();
-virtual uint16_t bdNodesPerBucket(); /* used for query + bdspace */
+virtual uint16_t bdNodesPerBucket(); /* used for bdspace */
+virtual uint16_t bdNumQueryNodes(); /* used for queries */
 virtual uint16_t bdBucketBitSize();
 
 virtual int bdDistance(const bdNodeId *n1, const bdNodeId *n2, bdMetric *metric);
 virtual int bdBucketDistance(const bdNodeId *n1, const bdNodeId *n2);
 virtual int bdBucketDistance(const bdMetric *metric);
 
-virtual uint32_t bdLikelySameNode(const bdId *id1, const bdId *id2);
+virtual bool bdSimilarId(const bdId *id1, const bdId *id2);
+virtual bool bdUpdateSimilarId(bdId *dest, const bdId *src); /* returns true if update was necessary */
 
 virtual void bdRandomMidId(const bdNodeId *target, const bdNodeId *other, bdNodeId *mid);
 
 virtual void bdPrintId(std::ostream &out, const bdId *a);
 virtual void bdPrintNodeId(std::ostream &out, const bdNodeId *a);
 
+};
+
+class bdModDht: public bdStdDht
+{
+	public:
+	bdModDht();
+virtual void setNodesPerBucket(uint16_t nodesPerBucket);
+virtual uint16_t bdNodesPerBucket(); /* used for bdspace */
+
+	private:
+	uint16_t mNodesPerBucket;
 };
 
 

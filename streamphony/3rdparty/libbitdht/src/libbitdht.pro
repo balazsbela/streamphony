@@ -1,5 +1,5 @@
 TEMPLATE = lib
-CONFIG += staticlib release
+CONFIG += staticlib
 CONFIG -= qt
 TARGET = bitdht
 QMAKE_CXXFLAGS *= -Wall -DBE_DEBUG
@@ -15,11 +15,15 @@ release {
 	# not much here yet.
 }
 
-#CONFIG += debug
+CONFIG += debug
 debug {
         QMAKE_CXXFLAGS -= -O2 -fomit-frame-pointer
         QMAKE_CXXFLAGS *= -g -fno-omit-frame-pointer
 }
+
+# treat warnings as error for better removing
+#QMAKE_CFLAGS += -Werror
+#QMAKE_CXXFLAGS += -Werror
 
 ################################# Linux ##########################################
 linux-* {
@@ -37,7 +41,7 @@ linux-g++-64 {
 
 #################### Cross compilation for windows under Linux ####################
 
-win32-x-g++ {	
+win32-x-g++ {
 	OBJECTS_DIR = temp/win32xgcc/obj
 	DESTDIR = lib.win32xgcc
 	# These have been replaced by _WIN32 && __MINGW32__
@@ -56,10 +60,24 @@ win32 {
 		QMAKE_CC = g++
 		OBJECTS_DIR = temp/obj
 		MOC_DIR = temp/moc
-		DEFINES *= STATICLIB 
+		DEFINES *= STATICLIB WIN32_LEAN_AND_MEAN _USE_32BIT_TIME_T
 		# These have been replaced by _WIN32 && __MINGW32__
 		#DEFINES *= WINDOWS_SYS WIN32 STATICLIB MINGW
 		DESTDIR = lib
+
+		# Switch on extra warnings
+		QMAKE_CFLAGS += -Wextra
+		QMAKE_CXXFLAGS += -Wextra
+
+		# Switch off optimization for release version
+		QMAKE_CXXFLAGS_RELEASE -= -O2
+		QMAKE_CXXFLAGS_RELEASE += -O0
+		QMAKE_CFLAGS_RELEASE -= -O2
+		QMAKE_CFLAGS_RELEASE += -O0
+
+		# Switch on optimization for debug version
+		#QMAKE_CXXFLAGS_DEBUG += -O2
+		#QMAKE_CFLAGS_DEBUG += -O2
 }
 
 ################################# MacOSX ##########################################
@@ -68,6 +86,18 @@ mac {
 		QMAKE_CC = g++
 		OBJECTS_DIR = temp/obj
 		MOC_DIR = temp/moc
+		DESTDIR = lib
+}
+
+################################# FreeBSD ##########################################
+
+freebsd-* {
+		DESTDIR = lib
+}
+
+################################# OpenBSD ##########################################
+
+openbsd-* {
 		DESTDIR = lib
 }
 
@@ -92,9 +122,22 @@ HEADERS += \
 	bitdht/bdhistory.h	\
 	util/bdnet.h	\
 	util/bdthreads.h	\
+	util/bdrandom.h		\
+	util/bdfile.h		\
+	util/bdstring.h		\
 	udp/udplayer.h   	\
 	udp/udpstack.h		\
 	udp/udpbitdht.h   	\
+	bitdht/bdconnection.h	\
+	bitdht/bdfilter.h	\
+	bitdht/bdaccount.h	\
+	bitdht/bdquerymgr.h	\
+	util/bdbloom.h		\
+	bitdht/bdfriendlist.h	\
+	auth/PasswordAuth.h \
+	auth/AuthCryptoFns.h \
+	auth/Storage.h \
+        auth/rsaes.h
 
 SOURCES += \
 	bitdht/bencode.c	\
@@ -108,10 +151,23 @@ SOURCES += \
 	bitdht/bdmanager.cc	\
 	bitdht/bdstddht.cc	\
 	bitdht/bdhistory.cc	\
-	util/bdnet.cc  	\
+	util/bdnet.cc 	 	\
 	util/bdthreads.cc  	\
+	util/bdrandom.cc  	\
+	util/bdfile.cc		\
+	util/bdstring.cc	\
 	udp/udplayer.cc		\
 	udp/udpstack.cc		\
 	udp/udpbitdht.cc  	\
+	bitdht/bdconnection.cc	\
+	bitdht/bdfilter.cc	\
+	bitdht/bdaccount.cc	\
+	bitdht/bdquerymgr.cc	\
+	util/bdbloom.cc		\
+	bitdht/bdfriendlist.cc	\
+	auth/PasswordAuth.cc \
+	auth/AuthCryptoFns.cc \
+	auth/Storage.cc \
+        auth/rsaes.cc
 
 

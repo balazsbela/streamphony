@@ -1,6 +1,8 @@
 #ifndef BITDHT_HASH_SPACE_H
 #define BITDHT_HASH_SPACE_H
 
+// CRAIG: does not appear to be used
+
 /*
  * bitdht/bdhash.h
  *
@@ -39,7 +41,8 @@ class bdHashEntry
 {
 	public:
 
-	bdHashEntry(std::string value, std::string secret, time_t lifetime, time_t store);
+	bdHashEntry(std::string value, std::string secret,
+	            time_t lifetime, time_t store);
 	std::string mValue;
 	time_t mStoreTS;
 
@@ -55,7 +58,8 @@ class bdHashSet
 
 	bdHashSet(bdNodeId *id);
 
-int     search(std::string key, uint32_t maxAge, std::list<bdHashEntry> &entries);
+int     search(std::string key, uint32_t maxAge,
+               std::list<bdHashEntry> &entries);
 int     modify(std::string key, bdHashEntry *entry, uint32_t modFlags);
 int     printHashSet(std::ostream &out);
 int     cleanupHashSet(uint32_t maxAge);
@@ -71,8 +75,10 @@ class bdHashSpace
 	bdHashSpace();
 
 	/* accessors */
-int 	search(bdNodeId *id, std::string key, uint32_t maxAge, std::list<bdHashEntry> &entries);
-int 	modify(bdNodeId *id, std::string key, bdHashEntry *entry, uint32_t modFlags);
+int 	search(bdNodeId *id, std::string key, uint32_t maxAge,
+               std::list<bdHashEntry> &entries);
+int 	modify(bdNodeId *id, std::string key, bdHashEntry *entry,
+               uint32_t modFlags);
 
 int 	printHashSpace(std::ostream&);
 int     cleanHashSpace(bdNodeId *min, bdNodeId *max, time_t maxAge);

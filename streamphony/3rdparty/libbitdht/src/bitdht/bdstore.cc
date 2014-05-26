@@ -26,6 +26,7 @@
 
 #include "bitdht/bdstore.h"
 #include "util/bdnet.h"
+#include "util/bdfile.h"
 
 #include <stdio.h>
 #include <iostream>
@@ -79,7 +80,7 @@ int bdStore::reloadFromStore()
 			{
 				addr.sin_port = htons(port);
 				bdPeer peer;
-				//bdZeroNodeId(&(peer.mPeerId.id));
+				bdZeroNodeId(&(peer.mPeerId.id));
 				peer.mPeerId.addr = addr;
 				peer.mLastSendTime = 0;
 				peer.mLastRecvTime = 0;
@@ -101,6 +102,7 @@ int bdStore::reloadFromStore()
 
 }
 
+// This is a very ugly function!
 int 	bdStore::getPeer(bdPeer *peer)
 {
 #ifdef DEBUG_STORE
@@ -119,6 +121,35 @@ int 	bdStore::getPeer(bdPeer *peer)
 	return 0;
 }
 
+int     bdStore::filterIpList(const std::list<struct sockaddr_in> &filteredIPs)
+{
+	// Nasty O(n^2) iteration over 500 entries!!!. 
+	// hope its not used to often.
+
+	std::list<struct sockaddr_in>::const_iterator it;
+	for(it = filteredIPs.begin(); it != filteredIPs.end(); it++)
+	{
+		std::list<bdPeer>::iterator sit;
+		for(sit = store.begin(); sit != store.end();)
+		{
+			if (it->sin_addr.s_addr == sit->mPeerId.addr.sin_addr.s_addr)
+			{
+				std::cerr << "bdStore::filterIpList() Found Bad entry in Store. Erasing!";
+				std::cerr << std::endl;
+
+				sit = store.erase(sit);
+			}
+			else
+			{
+				sit++;
+			}
+		}
+	}
+	return 1;
+}
+			
+		
+
 #define MAX_ENTRIES 500
 
 	/* maintain a sorted list */
@@ -131,7 +162,6 @@ void	bdStore::addStore(bdPeer *peer)
 #endif
 
 	/* remove old entry */
-	bool removed = false;
 
 	std::list<bdPeer>::iterator it;
 	for(it = store.begin(); it != store.end(); )
@@ -139,7 +169,6 @@ void	bdStore::addStore(bdPeer *peer)
 		if ((it->mPeerId.addr.sin_addr.s_addr == peer->mPeerId.addr.sin_addr.s_addr) &&
 		    (it->mPeerId.addr.sin_port == peer->mPeerId.addr.sin_port))
 		{
-			removed = true;
 #ifdef DEBUG_STORE
 			std::cerr << "bdStore::addStore() Removed Existing Entry: ";
 			mFns->bdPrintId(std::cerr, &(it->mPeerId));
@@ -185,8 +214,9 @@ void	bdStore::writeStore(std::string file)
 		return;
 	}
 
+	std::string filetmp = file + ".tmp" ;
 
-	FILE *fd = fopen(file.c_str(), "w");
+	FILE *fd = fopen(filetmp.c_str(), "w");
 
 	if (!fd)
 	{
@@ -199,13 +229,20 @@ void	bdStore::writeStore(std::string file)
 	std::list<bdPeer>::iterator it;
 	for(it = store.begin(); it != store.end(); it++)
 	{
-		fprintf(fd, "%s %d\n", inet_ntoa(it->mPeerId.addr.sin_addr), ntohs(it->mPeerId.addr.sin_port));
+		fprintf(fd, "%s %d\n", bdnet_inet_ntoa(it->mPeerId.addr.sin_addr).c_str(), ntohs(it->mPeerId.addr.sin_port));
 #ifdef DEBUG_STORE
 		fprintf(stderr, "Storing Peer Address: %s %d\n", inet_ntoa(it->mPeerId.addr.sin_addr), ntohs(it->mPeerId.addr.sin_port));
 #endif
 
 	}
 	fclose(fd);
+
+	if(!bdFile::renameFile(filetmp,file))
+		std::cerr << "Could not rename file !!" << std::endl;
+#ifdef DEBUG_STORE
+	else
+		std::cerr << "Successfully renamed file " << filetmp << " to " << file << std::endl;
+#endif
 }
 
 void	bdStore::writeStore()
@@ -218,4 +255,6 @@ void	bdStore::writeStore()
 #endif
 	return writeStore(mStoreFile);
 }
+
+
 
