@@ -10,6 +10,7 @@
 #include <QScopedPointer>
 #include <QTimer>
 #include <QHostAddress>
+#include <QHash>
 
 class DhtManager : public QObject
 {
@@ -24,25 +25,27 @@ public:
     bool isEnabled();
     bool isActive();
 
-    bool findNode(bdNodeId *peerId) const;
+    bool findNode(bdNodeId *peerId);
     bool dropNode(bdNodeId *peerId);
 
-    bool findNode(const QString &dataToHash) const;
-    QByteArray hash(const QString &data) const;
+    bool findNode(const QString &dataToHash);
+    QByteArray hash(const QString &data) const;    
 
-    // Callback handler
+    // Callback handlers
     void foundPeer(const bdNodeId *id, uint32_t status);
+    void dhtNodeCallback(const bdId *node, uint32_t peerflags);
 
 signals:
     void peerIpFound(const QString &nodeId, const QHostAddress &ip, const quint16 port);
+    void dhtReady();
 
 private:
     /* real DHT classes */
     QScopedPointer<UdpStack> m_stack;
     QScopedPointer<UdpBitDht> m_udpBitDht;
-    QScopedPointer<bdSpace> m_bdSpace;
-    QTimer m_pollTimer;
-
+    QScopedPointer<bdSpace> m_bdSpace;    
+    quint64 m_nodeCount = 0;
+    bool m_initialized = 0;
 };
 
 #endif // DHTMANAGER_H

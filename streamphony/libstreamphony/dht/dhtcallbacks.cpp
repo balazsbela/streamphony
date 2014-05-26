@@ -16,6 +16,8 @@ int DhtCallbacks::dhtNodeCallback(const bdId *node, uint32_t peerflags)
     debugDht() << "DHT NODE Callback" << endl;
     bdStdPrintNodeId(std::cout, &(node->id));
 
+    m_parent->dhtNodeCallback(node, peerflags);
+
     return 0;
 }
 

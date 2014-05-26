@@ -91,7 +91,7 @@ bool DhtManager::isActive()
     return m_udpBitDht->stateDht() >= BITDHT_MGR_STATE_ACTIVE;
 }
 
-bool DhtManager::findNode(bdNodeId *peerId) const
+bool DhtManager::findNode(bdNodeId *peerId)
 {
     std::cerr << "BitDhtHandler::FindNode(";
     bdStdPrintNodeId(std::cerr, peerId);
@@ -99,25 +99,33 @@ bool DhtManager::findNode(bdNodeId *peerId) const
 
     m_udpBitDht->addFindNode(peerId, BITDHT_QFLAGS_DO_IDLE);
 
-//    auto poll = [this, peerId]() {
+//    auto poll = [this, peerId]() -> bool {
 //        struct sockaddr_in peerAddr;
 //        if (m_udpBitDht->getDhtPeerAddress(peerId, peerAddr)) {
 //            qDebug() << "FOUND PEER:" << endl;
 //            qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << htons(peerAddr.sin_port) << endl;
-//            m_pollTimer.stop();
+
+//            std::stringstream stream;
+//            bdStdPrintNodeId(stream, peerId);
+//            quint16 port = htons(peerAddr.sin_port);
+//            emit peerIpFound(QString::fromStdString(stream.str()),
+//                             QHostAddress(QString(inet_ntoa(peerAddr.sin_addr))), port);
+//            return true;
 //        } else {
 //            qDebug() << endl << endl << "Couldn't find peer yet!" << endl;
+//            return false;
 //        }
 //    };
 
 //    QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
+//    QSharedPointer<QTimer> timer(new QTimer(this));
 
-//    m_pollTimer.setInterval(10000);
-//    connect(&m_pollTimer, &QTimer::timeout, [=]() {
-//        (*callback)();
+//    timer->setInterval(10000);
+//    connect(timer.data(), &QTimer::timeout, [=]() {
+//        if ((*callback)())
+//            timer->stop();
 //    });
-
-//    m_pollTimer.start();
+//    timer->start();
 
     return true;
 }
@@ -134,24 +142,43 @@ bool DhtManager::dropNode(bdNodeId *peerId)
 }
 
 void DhtManager::foundPeer(const bdNodeId *id, uint32_t status)
-{
-    struct sockaddr_in peerAddr;
-    if (m_udpBitDht->getDhtPeerAddress(id, peerAddr)) {
+{      
+    auto poll = [&]() -> bool {
+        qDebug() << "Called poll :" << status ;
+        bdStdPrintNodeId(std::cout, id);
 
-        quint16 port = htons(peerAddr.sin_port);
+        struct sockaddr_in peerAddr;
+        if (m_udpBitDht->getDhtPeerAddress(id, peerAddr) == 1) {
+            quint16 port = htons(peerAddr.sin_port);
 
-        qDebug() << "FOUND PEER:" << endl;
-        qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << port << endl;
+            qDebug() << "FOUND PEER:" << endl;
+            qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << port << endl;
 
-        std::stringstream stream;
-        bdStdPrintNodeId(stream, id);
+            std::stringstream stream;
+            bdStdPrintNodeId(stream, id);
 
-        emit peerIpFound(QString::fromStdString(stream.str()),
-                         QHostAddress(QString(inet_ntoa(peerAddr.sin_addr))), port);
+            emit peerIpFound(QString::fromStdString(stream.str()),
+                             QHostAddress(QString(inet_ntoa(peerAddr.sin_addr))), port);
+            return true;
+        }
+        return false;
+    };
+
+    if (!poll()) {
+        QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
+        QSharedPointer<QTimer> timer(new QTimer(this));
+
+        timer->setInterval(1000);
+        connect(timer.data(), &QTimer::timeout, [=]() {
+            if (poll()) {
+                timer->stop();
+            }
+        });
+        timer->start();
     }
 }
 
-bool DhtManager::findNode(const QString &dataToHash) const
+bool DhtManager::findNode(const QString &dataToHash)
 {
     bdNodeId friendId;
     bdStdNodeIdFromArray(&friendId, hash(dataToHash));
@@ -164,4 +191,13 @@ QByteArray DhtManager::hash(const QString &data) const
     QCryptographicHash friendHash(QCryptographicHash::Sha1);
     friendHash.addData(data.toStdString().c_str());
     return friendHash.result();
+}
+
+void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags) {
+    m_nodeCount++;
+    if (m_nodeCount > 10 && !m_initialized) {
+        m_initialized = true;
+        emit dhtReady();
+        debugDht() << "DHT has more than 10 nodes, emitting dhtReady!";
+    }
 }

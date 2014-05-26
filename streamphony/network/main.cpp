@@ -19,8 +19,7 @@ int main(int argc, char *argv[])
 //    SettingsManager::instance()->setEmail(QStringLiteral("balazsbela@gmail.com"));
 //    SettingsManager::instance()->setXmppUsername(QStringLiteral("balazsbela1"));
 
-    XmppManager xmppManager(&app);
-    xmppManager.signIn();
+    XmppManager xmppManager(&app);   
 
     LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
     LightHttpDaemon daemon(MIN_PORT, MAX_PORT, &app);
@@ -35,6 +34,9 @@ int main(int argc, char *argv[])
     uint16_t port = 6775;
 
     DhtManager dht(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"), &app);
+    QObject::connect(&dht, &DhtManager::dhtReady, [&]() {
+        xmppManager.signIn();
+    });
 
     ConnectionManager connectionManager(&dht, &xmppManager, &app);
 
