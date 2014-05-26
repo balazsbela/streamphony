@@ -25,6 +25,7 @@ void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, con
 {
     debugDht() << "Using id:";
     bdStdPrintNodeId(std::cerr, ownId);
+    debugDht() << endl;
     debugDht() << endl << "Using bootstrap file:" << bootstrapFile;
 
     /* standard dht behaviour */

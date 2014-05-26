@@ -34,7 +34,7 @@ void XmppManager::signIn()
             const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
             Q_UNUSED(roster);
             //qDebug() << roster.bareJid() <<  roster.name();
-           m_vCardCache.requestVCard(bareJid);
+            m_vCardCache.requestVCard(bareJid);
         }      
     });
 
@@ -52,6 +52,8 @@ void XmppManager::signIn()
             if (!m_signInCompleted) {
                 m_signInCompleted = true;
                 emit signInCompleted();
+                QXmppPresence presence(QXmppPresence::Available);
+                m_xmppClient.setClientPresence(presence);
             }
         }, this);
     });
