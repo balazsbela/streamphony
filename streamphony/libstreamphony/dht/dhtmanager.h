@@ -30,6 +30,7 @@ public:
 
     bool findNode(const QString &dataToHash);
     QByteArray hash(const QString &data) const;    
+    int nodeCount();
 
     // Callback handlers
     void foundPeer(const bdNodeId *id, uint32_t status);
@@ -37,7 +38,6 @@ public:
 
 signals:
     void peerIpFound(const QString &nodeId, const QHostAddress &ip, const quint16 port);
-    void dhtReady();
 
 private:
     /* real DHT classes */

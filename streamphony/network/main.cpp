@@ -11,6 +11,8 @@
 #include <QCryptographicHash>
 #include <QDebug>
 
+static const int MINIMAL_NUMBER_OF_NODES = 5;
+
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
@@ -34,12 +36,17 @@ int main(int argc, char *argv[])
     uint16_t port = 6775;
 
     DhtManager dht(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"), &app);
-    QObject::connect(&dht, &DhtManager::dhtReady, [&]() {
-        xmppManager.signIn();
-    });
-
     ConnectionManager connectionManager(&dht, &xmppManager, &app);
 
+    QTimer dhtReadyTimer;
+    dhtReadyTimer.setInterval(5000);
+    QObject::connect(&dhtReadyTimer, &QTimer::timeout, [&]() {
+        if (dht.nodeCount() > MINIMAL_NUMBER_OF_NODES) {
+            xmppManager.signIn();
+            dhtReadyTimer.stop();
+        }
+    });
+    dhtReadyTimer.start();
 
 //    QCryptographicHash friendHash(QCryptographicHash::Sha1);
 //    friendHash.addData("balazsbela90@gmail.com");

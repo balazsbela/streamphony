@@ -195,9 +195,8 @@ QByteArray DhtManager::hash(const QString &data) const
 
 void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags) {
     m_nodeCount++;
-    if (m_nodeCount > 10 && !m_initialized) {
-        m_initialized = true;
-        emit dhtReady();
-        debugDht() << "DHT has more than 10 nodes, emitting dhtReady!";
-    }
+}
+
+int DhtManager::nodeCount() {
+    return m_nodeCount;
 }
