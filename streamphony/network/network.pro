@@ -7,9 +7,7 @@
 include(../global.pri);
 include(../utils/utils.pri);
 
-QT       += core network xml
-
-QT       -= gui
+QT += core network xml gui
 
 TARGET = network
 CONFIG   += console

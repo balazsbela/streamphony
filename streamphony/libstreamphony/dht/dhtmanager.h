@@ -16,8 +16,10 @@ class DhtManager : public QObject
 {
     Q_OBJECT
 public:
-    DhtManager(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapfile, QObject *parent = 0);
+    DhtManager(QObject *parent = 0);
     ~DhtManager() override;
+
+    void start(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapfile);
 
     void enable(bool on);
     void shutdown(); /* blocking call */
@@ -28,7 +30,8 @@ public:
     bool findNode(bdNodeId *peerId);
     bool dropNode(bdNodeId *peerId);
 
-    bool findNode(const QString &dataToHash);
+    bool findNode(const QString &dataToHash);    
+    bool findNodeByHash(const QByteArray &hash);
     QByteArray hash(const QString &data) const;    
     int nodeCount();
 

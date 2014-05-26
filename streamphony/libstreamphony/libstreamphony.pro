@@ -7,9 +7,7 @@
 include(../global.pri);
 include(../utils/utils.pri);
 
-QT       -= gui
-
-QT += network xml
+QT += network xml gui
 
 TARGET = streamphony
 TEMPLATE = lib
@@ -19,6 +17,8 @@ SOURCES += \
     dht/dhtmanager.cpp \
     dht/dhtcallbacks.cpp \
     xmpp/xmppmanager.cpp \
+    xmpp/vcardcache.cpp \
+    xmpp/utils.cpp \
     settings/settingsmanager.cpp \
     daemon/lighthttpdaemon.cpp \
     daemon/localfilecontentresolver.cpp \
@@ -30,6 +30,8 @@ HEADERS += \
     dht/dhtdebug.h \
     dht/dhtcallbacks.h \
     xmpp/xmppmanager.h \
+    xmpp/vcardcache.h \
+    xmpp/utils.h \
     settings/settingsmanager.h \
     daemon/lighthttpdaemon.h \
     daemon/localfilecontentresolver.h \

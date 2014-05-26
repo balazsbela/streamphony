@@ -4,6 +4,8 @@
 #include "QXmppClient.h"
 #include "settings/settingsmanager.h"
 #include "QXmppRosterManager.h"
+#include "QXmppVCardIq.h"
+#include "vcardcache.h"
 
 #include <QObject>
 #include <QSharedPointer>
@@ -19,6 +21,8 @@ public:
     void signIn();
     QStringList allAvailableJids() const;
     const QXmppRosterIq::Item roster(const QString &bareJid);
+    QByteArray userUniqueId(const QString &bareJid);
+    QString ownJid();
 
 signals:
     void signInCompleted();
@@ -26,6 +30,8 @@ signals:
 private:
     QXmppClient m_xmppClient;
     QHash<QString, QXmppPresence> m_presenceHash;
+    vCardCache m_vCardCache;
+    bool m_signInCompleted = false;
 };
 
 #endif // XMPPMANAGER_H

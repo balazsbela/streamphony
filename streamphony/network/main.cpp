@@ -22,27 +22,31 @@ int main(int argc, char *argv[])
 //    SettingsManager::instance()->setXmppUsername(QStringLiteral("balazsbela1"));
 
     XmppManager xmppManager(&app);   
+    xmppManager.signIn();
 
     LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
     LightHttpDaemon daemon(MIN_PORT, MAX_PORT, &app);
     daemon.setContentResolver(resolver);
 
-    QCryptographicHash hash(QCryptographicHash::Sha1);
-    hash.addData(SettingsManager::instance()->email().toStdString().c_str());
-
-    bdNodeId ownId;
-    bdStdNodeIdFromArray(&ownId, hash.result());
-
     uint16_t port = 6775;
 
-    DhtManager dht(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"), &app);
+    DhtManager dht(&app);
+    QObject::connect(&xmppManager, &XmppManager::signInCompleted, [&]() {
+       QCryptographicHash hash(QCryptographicHash::Sha1);
+       hash.addData(xmppManager.userUniqueId(xmppManager.ownJid()));
+
+       bdNodeId ownId;
+       bdStdNodeIdFromArray(&ownId, hash.result());
+       dht.start(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"));
+    });
+
     ConnectionManager connectionManager(&dht, &xmppManager, &app);
 
     QTimer dhtReadyTimer;
     dhtReadyTimer.setInterval(5000);
     QObject::connect(&dhtReadyTimer, &QTimer::timeout, [&]() {
         if (dht.nodeCount() > MINIMAL_NUMBER_OF_NODES) {
-            xmppManager.signIn();
+            connectionManager.populateNodeHash();
             dhtReadyTimer.stop();
         }
     });

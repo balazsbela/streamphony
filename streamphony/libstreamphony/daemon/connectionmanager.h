@@ -18,7 +18,6 @@ public:
     explicit ConnectionManager(DhtManager *dhtManager, XmppManager *xmppManager, QObject *parent = 0);
     ~ConnectionManager() override;
 
-private:
     void populateNodeHash();
 
 private:

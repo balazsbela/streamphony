@@ -16,9 +16,13 @@
 static const int PEER_DISCOVERY_TIMEOUT = 180000; //msecs
 static const int RANDOM_PEER_LIMIT = 13;
 
-DhtManager::DhtManager(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapFile, QObject *parent)
+DhtManager::DhtManager(QObject *parent)
     : QObject(parent)
 {   
+}
+
+void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapFile)
+{
     debugDht() << "Using id:";
     bdStdPrintNodeId(std::cerr, ownId);
     debugDht() << endl << "Using bootstrap file:" << bootstrapFile;
@@ -54,6 +58,7 @@ DhtManager::DhtManager(bdNodeId *ownId, uint16_t port, const QString &appId, con
         qDebug() << m_udpBitDht->statsNetworkSize();
     }, nullptr);
 }
+
 
 DhtManager::~DhtManager()
 {
@@ -182,6 +187,14 @@ bool DhtManager::findNode(const QString &dataToHash)
 {
     bdNodeId friendId;
     bdStdNodeIdFromArray(&friendId, hash(dataToHash));
+
+    return findNode(&friendId);
+}
+
+bool DhtManager::findNodeByHash(const QByteArray &hash)
+{
+    bdNodeId friendId;
+    bdStdNodeIdFromArray(&friendId, hash.data());
 
     return findNode(&friendId);
 }

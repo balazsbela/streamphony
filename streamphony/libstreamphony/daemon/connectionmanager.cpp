@@ -19,11 +19,7 @@ ConnectionManager::ConnectionManager(DhtManager *dhtManager, XmppManager *xmppMa
     Q_ASSERT(dhtManager);
 
     m_xmppManager.reset(xmppManager);
-    m_dhtManager.reset(dhtManager);
-
-    connect(m_xmppManager.data(), &XmppManager::signInCompleted, [&]() {
-       populateNodeHash();
-    });
+    m_dhtManager.reset(dhtManager); 
 }
 
 ConnectionManager::~ConnectionManager()
@@ -39,7 +35,11 @@ void ConnectionManager::populateNodeHash()
 
     for (const QString &jid : m_xmppManager->allAvailableJids()) {
         debugConnectionManager() << "Launching ip query for:" << jid;
-        nodeIdMap[QString::fromUtf8(m_dhtManager->hash(jid))] = jid;
-        m_dhtManager->findNode(jid);
+
+        const QByteArray uniqueData = m_xmppManager->userUniqueId(jid);
+        const QString hash = QString::fromUtf8(m_dhtManager->hash(uniqueData));
+
+        nodeIdMap[hash] = jid;
+        m_dhtManager->findNode(hash);
     }
 }
