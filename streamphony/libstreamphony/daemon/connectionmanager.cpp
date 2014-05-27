@@ -31,6 +31,8 @@ void ConnectionManager::populateNodeHash()
 {
     auto launchQuery = [&] (const QByteArray &uniqueData, const QString &jid) {
         const QString hash = QString::fromUtf8(m_dhtManager->hash(uniqueData));
+        Q_ASSERT(!m_xmppManager->fullName(jid).isEmpty());
+
         debugConnectionManager() << "Launching ip query for:" << jid << ":" << m_xmppManager->fullName(jid);
         nodeIdMap[hash] = jid;
         m_dhtManager->findNode(hash);
@@ -57,7 +59,5 @@ void ConnectionManager::populateNodeHash()
         } else {
             launchQuery(uniqueData, jid);
         }
-
-
     }
 }
