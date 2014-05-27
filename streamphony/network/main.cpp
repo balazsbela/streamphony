@@ -47,7 +47,9 @@ int main(int argc, char *argv[])
     QObject::connect(&dhtReadyTimer, &QTimer::timeout, [&]() {
         if (dht.nodeCount() >= MINIMAL_NUMBER_OF_NODES) {
             connectionManager.populateNodeHash();
-            dhtReadyTimer.stop();
+
+            // Launch new queries every 30 seconds because online contacts have probably changed.
+            dhtReadyTimer.setInterval(30000);
         }
     });
     dhtReadyTimer.start();

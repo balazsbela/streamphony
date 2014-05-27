@@ -33,8 +33,8 @@ void XmppManager::signIn()
         for (const QString &bareJid : m_xmppClient.rosterManager().getRosterBareJids()) {
             const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
             Q_UNUSED(roster);
-            qDebug() << roster.bareJid() <<  roster.name();
             m_vCardCache.requestVCard(bareJid);
+            //qDebug() << roster.bareJid() <<  roster.name();
         }      
     });
 

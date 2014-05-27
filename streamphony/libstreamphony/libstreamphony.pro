@@ -38,7 +38,8 @@ HEADERS += \
     daemon/contentresolver.h \
     daemon/portrange.h \
     daemon/connectionmanager.h \
-    daemon/node.h
+    daemon/node.h \
+    daemon/nodestatus.h
 
 #unix {
 #    target.path = /usr/lib

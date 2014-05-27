@@ -2,11 +2,11 @@
 #define CONNECTIONMANAGER_H
 
 #include "xmpp/xmppmanager.h"
+#include "daemon/nodestatus.h"
 
 #include <QObject>
 #include <QSharedPointer>
 #include <QScopedPointer>
-
 
 class Node;
 class DhtManager;
@@ -26,7 +26,7 @@ private:
 
     //! key is the bareJid
     QHash<QString, QSharedPointer<Node>> m_nodeHash;
-    QHash<QString, QString> nodeIdMap;
+    QHash<QString, NodeStatus> nodeIdMap;
 };
 
 #endif // CONNECTIONMANAGER_H
