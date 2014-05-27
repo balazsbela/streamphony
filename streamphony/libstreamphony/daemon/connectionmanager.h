@@ -26,7 +26,7 @@ private:
 
     //! key is the bareJid
     QHash<QString, QSharedPointer<Node>> m_nodeHash;
-    QHash<QString, NodeStatus> nodeIdMap;
+    QHash<QString, QSharedPointer<NodeStatus>> nodeIdMap;
 };
 
 #endif // CONNECTIONMANAGER_H

@@ -44,6 +44,7 @@ public:
     NodeStatus& operator= (const NodeStatus &other) {
         this->m_jid = other.m_jid;
         this->m_queryRunning = other.m_queryRunning;
+        return *this;
     }
 
 private:

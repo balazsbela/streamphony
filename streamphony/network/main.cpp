@@ -35,6 +35,8 @@ int main(int argc, char *argv[])
        QCryptographicHash hash(QCryptographicHash::Sha1);
        hash.addData(xmppManager.userUniqueId(xmppManager.ownJid()));
 
+       qDebug() << "OwnId:" << hash.result().toHex();
+
        bdNodeId ownId;
        bdStdNodeIdFromArray(&ownId, hash.result());
        dht.start(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"));

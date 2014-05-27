@@ -33,21 +33,22 @@ void ConnectionManager::populateNodeHash()
         const QString hash = QString::fromUtf8(m_dhtManager->hash(uniqueData));
         Q_ASSERT(!m_xmppManager->fullName(jid).isEmpty());
 
-        if (nodeIdMap[hash].jid() == jid) {
-            if (nodeIdMap[hash].queryRunning()) {
+        if (nodeIdMap[hash] != nullptr && nodeIdMap[hash]->jid() == jid) {
+            if (nodeIdMap[hash]->queryRunning()) {
                 debugConnectionManager() << "Query already running, not launching again!";
                 return;
             }
         }
         debugConnectionManager() << "Launching ip query for:" << jid << ":" << m_xmppManager->fullName(jid);
-        nodeIdMap[hash] = NodeStatus(jid, true);
+        nodeIdMap[hash] = QSharedPointer<NodeStatus>(new NodeStatus(jid, true));
         m_dhtManager->findNode(hash);
     };
 
     connect(m_dhtManager.data(), &DhtManager::peerIpFound, [&](const QString &id, const QHostAddress &ip, const quint16 port) {
-        debugConnectionManager() << "Received ip for:" << nodeIdMap[id].jid();
-        m_nodeHash[nodeIdMap[id].jid()] = QSharedPointer<Node>(new Node(id, ip, port));
-        nodeIdMap[id] = NodeStatus(nodeIdMap[id].jid(), false);
+        Q_ASSERT(nodeIdMap[id]!=nullptr);
+        debugConnectionManager() << "Received ip for:" << nodeIdMap[id]->jid();
+        m_nodeHash[nodeIdMap[id]->jid()] = QSharedPointer<Node>(new Node(id, ip, port));
+        nodeIdMap[id] = QSharedPointer<NodeStatus>(new NodeStatus(nodeIdMap[id]->jid(), false));
     });
 
     for (const QString &jid : m_xmppManager->allAvailableJids()) {

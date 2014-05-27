@@ -105,6 +105,8 @@ QByteArray XmppManager::userUniqueId(const QString &bareJid)
     if (!vCard.fullName().isEmpty())
         m_vCardCache.requestVCard(bareJid);
 
+    qDebug() << "Returning userUniqueId for " << vCard.fullName() << " photo " << vCard.photo().size();
+
     return vCard.fullName().toUtf8() + vCard.photo();
 }
 
