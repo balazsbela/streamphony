@@ -54,7 +54,7 @@ void ConnectionManager::populateNodeHash()
     for (const QString &jid : m_xmppManager->allAvailableJids()) {
         const QByteArray uniqueData = m_xmppManager->userUniqueId(jid);
         if (uniqueData.size() == 0) {
-            QSharedPointer<QTimer> timer;
+            QSharedPointer<QTimer> timer = QSharedPointer<QTimer>(new QTimer());
             timer->setInterval(5000);
             connect(timer.data(), &QTimer::timeout, [&]() {
                 const QByteArray &data = m_xmppManager->userUniqueId(jid);
