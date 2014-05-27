@@ -103,14 +103,16 @@ const QXmppRosterIq::Item XmppManager::roster(const QString &bareJid)
 QByteArray XmppManager::userUniqueId(const QString &bareJid)
 {
     auto vCard = m_vCardCache.getVCard(bareJid);
-    if (!vCard.fullName().isEmpty())
+    if (vCard.fullName().isEmpty()) {
         m_vCardCache.requestVCard(bareJid);
+        return {};
+    }
 
     QCryptographicHash hash(QCryptographicHash::Sha1);
     hash.addData(vCard.photo());
 
-    const QString userHash = hash.result().toHex();
-    qDebug() << "Returning userUniqueId for " << userHash;
+    //const QString userHash = hash.result().toHex();
+    //qDebug() << "Returning userUniqueId for " << userHash;
 
     return hash.result();
 }

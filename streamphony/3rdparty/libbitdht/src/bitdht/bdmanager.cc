@@ -648,7 +648,7 @@ void bdNodeManager::SearchForLocalNet()
 		}
 	}
 
-#define MAX_SEARCH_QUERIES 5
+#define MAX_SEARCH_QUERIES 300
 
 	for(;numSearchQueries < MAX_SEARCH_QUERIES; numSearchQueries++)
 	{

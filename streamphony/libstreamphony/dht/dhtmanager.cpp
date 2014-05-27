@@ -103,7 +103,7 @@ bool DhtManager::findNode(bdNodeId *peerId)
     bdStdPrintNodeId(std::cerr, peerId);
     std::cerr << ")" << std::endl;
 
-    m_udpBitDht->addFindNode(peerId, BITDHT_QFLAGS_DO_IDLE);
+    m_udpBitDht->addFindNode(peerId, BITDHT_QFLAGS_UPDATES);
 
 //    auto poll = [this, peerId]() -> bool {
 //        struct sockaddr_in peerAddr;
@@ -191,10 +191,17 @@ bool DhtManager::findNodeByHash(const QByteArray &hash)
     return findNode(&friendId);
 }
 
-void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags) {
+void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags)
+{
     m_nodeCount++;
 }
 
-int DhtManager::nodeCount() {
+int DhtManager::nodeCount()
+{
     return m_nodeCount;
+}
+
+void DhtManager::advertiseSelf()
+{
+    //m_udpBitDht->postHash();
 }

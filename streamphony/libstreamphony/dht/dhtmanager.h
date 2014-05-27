@@ -37,6 +37,8 @@ public:
     void foundPeer(const bdNodeId *id, uint32_t status);
     void dhtNodeCallback(const bdId *node, uint32_t peerflags);
 
+    void advertiseSelf();
+
 signals:
     void peerIpFound(const QString &nodeId, const QHostAddress &ip, const quint16 port);
 
