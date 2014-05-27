@@ -32,7 +32,7 @@ public:
     virtual int dhtInfoCallback(const bdId *id, uint32_t type, uint32_t flags, std::string info) override;
 
 private:
-    QPointer<DhtManager> m_parent;
+    QPointer<DhtManager> m_parent;    
 };
 
 #endif // DHTCALLBACKS_H

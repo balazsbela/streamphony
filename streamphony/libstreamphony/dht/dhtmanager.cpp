@@ -12,17 +12,37 @@
 #include <sstream>
 
 #include <QCryptographicHash>
+#include <QTcpSocket>
 
 static const int PEER_DISCOVERY_TIMEOUT = 180000; //msecs
 static const int RANDOM_PEER_LIMIT = 13;
 
-DhtManager::DhtManager(QObject *parent)
-    : QObject(parent)
-{   
+static const std::string SECRET = "StreamphonySecret";
+
+static QHostAddress retrieveOwnLocalIp()
+{
+    QTcpSocket socket;
+    socket.connectToHost("8.8.8.8", 53); // google DNS, or something else reliable
+    if (socket.waitForConnected()) {
+        return socket.localAddress();
+    } else {
+        qWarning()
+            << "could not determine local IPv4 address:"
+            << socket.errorString();
+    }
+    return {};
+}
+
+DhtManager::DhtManager(QObject *parent) : QObject(parent)
+{    
 }
 
 void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapFile)
 {
+    m_ownId = ownId; 
+
+    qDebug() << QString::fromStdString(m_ownIp);
+
     debugDht() << "Using id:";
     bdStdPrintNodeId(std::cerr, ownId);
     debugDht() << endl;
@@ -148,41 +168,42 @@ bool DhtManager::dropNode(bdNodeId *peerId)
     return true ;
 }
 
-void DhtManager::foundPeer(const bdNodeId *id, uint32_t status)
+void DhtManager::foundPeer(const bdId *id, uint32_t status)
 {      
-    auto poll = [&]() -> bool {
-        qDebug() << "Called poll :" << status ;
-        bdStdPrintNodeId(std::cout, id);
+//    auto poll = [&]() -> bool {
+//        qDebug() << "Called poll :" << status ;
+        bdStdPrintNodeId(std::cout, &id->id);
 
-        struct sockaddr_in peerAddr;
-        if (m_udpBitDht->getDhtPeerAddress(id, peerAddr) == 1) {
-            quint16 port = htons(peerAddr.sin_port);
+//        if (m_udpBitDht->getDhtPeerAddress(id, peerAddr) == 1) {
+            quint16 port = htons(id->addr.sin_port);
 
             qDebug() << "FOUND PEER:" << endl;
-            qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << port << endl;
+            qDebug() << inet_ntoa(id->addr.sin_addr) << ":" << port << endl;
 
             std::stringstream stream;
-            bdStdPrintNodeId(stream, id);
+            bdStdPrintNodeId(stream, &id->id);
 
             emit peerIpFound(QString::fromStdString(stream.str()),
-                             QHostAddress(QString(inet_ntoa(peerAddr.sin_addr))), port);
-            return true;
-        }
-        return false;
-    };
+                             QHostAddress(QString(inet_ntoa(id->addr.sin_addr))), port);
+//            return true;
+//        } else {
+//            qDebug() << "Couldn't get peer address yet!";
+//            return false;
+//        }
+//    };
 
-    if (!poll()) {
-        QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
-        QSharedPointer<QTimer> timer(new QTimer(this));
+//    if (!poll()) {
+//        QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
+//        QSharedPointer<QTimer> timer(new QTimer(this));
 
-        timer->setInterval(1000);
-        connect(timer.data(), &QTimer::timeout, [=]() {
-            if (poll()) {
-                timer->stop();
-            }
-        });
-        timer->start();
-    }
+//        timer->setInterval(1000);
+//        connect(timer.data(), &QTimer::timeout, [=]() {
+//            if ((*callback)()) {
+//                timer->stop();
+//            }
+//        });
+//        timer->start();
+//    }
 }
 
 bool DhtManager::findNodeByHash(const QByteArray &hash)
@@ -195,6 +216,12 @@ bool DhtManager::findNodeByHash(const QByteArray &hash)
 void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags)
 {
     m_nodeCount++;
+
+    bdId targetId = *node;
+
+// Not from the thread that own the mutex.
+//    m_udpBitDht->postHash(targetId, *m_ownId, m_ownIp, SECRET);
+//    debugDht() << "Posting hash to new node:" << QString::fromStdString(m_ownIp);
 }
 
 int DhtManager::nodeCount()
@@ -202,7 +229,8 @@ int DhtManager::nodeCount()
     return m_nodeCount;
 }
 
-void DhtManager::advertiseSelf()
+void DhtManager::setOwnIp(const std::string &ip)
 {
-    //m_udpBitDht->postHash();
+    m_ownIp = ip;
 }
+

@@ -14,19 +14,18 @@ DhtCallbacks::~DhtCallbacks()
 int DhtCallbacks::dhtNodeCallback(const bdId *node, uint32_t peerflags)
 {
     debugDht() << "DHT NODE Callback" << endl;
-    bdStdPrintNodeId(std::cout, &(node->id));
+    bdStdPrintNodeId(std::cout, &(node->id));   
 
     m_parent->dhtNodeCallback(node, peerflags);
-
     return 0;
 }
 
 int DhtCallbacks::dhtPeerCallback(const bdId *id, uint32_t status)
 {
     debugDht() << "DHT Peer Callback" << status << endl;
-    bdStdPrintNodeId(std::cout, &id->id);
+    bdStdPrintNodeId(std::cout, &id->id);    
 
-    m_parent->foundPeer(&id->id, status);
+    m_parent->foundPeer(id, status);
     return 0;
 }
 

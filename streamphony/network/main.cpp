@@ -10,6 +10,9 @@
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDebug>
+#include <QHostAddress>
+#include <QNetworkReply>
+#include <QNetworkAccessManager>
 
 static const int MINIMAL_NUMBER_OF_NODES = 2;
 
@@ -18,10 +21,23 @@ int main(int argc, char *argv[])
     QCoreApplication app(argc, argv);
 
     SettingsManager settingsManager(&app);
-//    SettingsManager::instance()->setEmail(QStringLiteral("balazsbela@gmail.com"));
-//    SettingsManager::instance()->setXmppUsername(QStringLiteral("balazsbela1"));
+    //    SettingsManager::instance()->setEmail(QStringLiteral("balazsbela@gmail.com"));
+    //    SettingsManager::instance()->setXmppUsername(QStringLiteral("balazsbela1"));
 
-    XmppManager xmppManager(&app);   
+    DhtManager dht(&app);
+
+
+    // Ridiculous, but couldn't find a simpler and faster way to find out the external ip of a router
+    QNetworkAccessManager accessManager;
+    QNetworkReply *networkReply = accessManager.get(QNetworkRequest(QUrl("http://ipecho.net/plain")));
+    QObject::connect(networkReply, &QNetworkReply::finished, [&]() {
+        if (networkReply->error() == QNetworkReply::NoError)
+            dht.setOwnIp(QString::fromUtf8(networkReply->readAll()).toStdString());
+        else
+            qWarning() << "ERROR GETTING EXTERNAL IP!";
+    });
+
+    XmppManager xmppManager(&app);
     xmppManager.signIn();
 
     LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
@@ -30,16 +46,15 @@ int main(int argc, char *argv[])
 
     uint16_t port = 6775;
 
-    DhtManager dht(&app);
     QObject::connect(&xmppManager, &XmppManager::signInCompleted, [&]() {
 
-       const QByteArray &hash = xmppManager.userUniqueId(xmppManager.ownJid());
+        const QByteArray &hash = xmppManager.userUniqueId(xmppManager.ownJid());
 
-       qDebug() << "OwnId:" << hash.toHex();
+        qDebug() << "OwnId:" << hash.toHex();
 
-       bdNodeId ownId;
-       bdStdNodeIdFromArray(&ownId, hash);
-       dht.start(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"));
+        bdNodeId ownId;
+        bdStdNodeIdFromArray(&ownId, hash);
+        dht.start(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"));
     });
 
     ConnectionManager connectionManager(&dht, &xmppManager, &app);
@@ -56,16 +71,5 @@ int main(int argc, char *argv[])
     });
     dhtReadyTimer.start();
 
-//    QCryptographicHash friendHash(QCryptographicHash::Sha1);
-//    friendHash.addData("balazsbela90@gmail.com");
-
-//    bdNodeId friendId;
-//    bdStdNodeIdFromArray(&friendId, friendHash.result());
-
-//    utils::singleShotTimer(15000, [&]() {
-//        dht.findNode(&friendId);
-//    }, nullptr);
-
     return app.exec();
-
 }

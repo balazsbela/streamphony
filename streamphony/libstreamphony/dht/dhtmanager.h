@@ -20,6 +20,7 @@ public:
     ~DhtManager() override;
 
     void start(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapfile);
+    void setOwnIp(const std::string &ip);
 
     void enable(bool on);
     void shutdown(); /* blocking call */
@@ -34,10 +35,8 @@ public:
     int nodeCount();
 
     // Callback handlers
-    void foundPeer(const bdNodeId *id, uint32_t status);
-    void dhtNodeCallback(const bdId *node, uint32_t peerflags);
-
-    void advertiseSelf();
+    void foundPeer(const bdId *id, uint32_t status);
+    void dhtNodeCallback(const bdId *node, uint32_t peerflags);    
 
 signals:
     void peerIpFound(const QString &nodeId, const QHostAddress &ip, const quint16 port);
@@ -49,6 +48,10 @@ private:
     QScopedPointer<bdSpace> m_bdSpace;    
     quint64 m_nodeCount = 0;
     bool m_initialized = 0;
+    bdNodeId *m_ownId = nullptr;
+    std::string m_ownIp;
+
+    friend class DhtCallbacks;
 };
 
 #endif // DHTMANAGER_H
