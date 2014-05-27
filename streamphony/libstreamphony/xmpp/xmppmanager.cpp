@@ -33,20 +33,22 @@ void XmppManager::signIn()
         for (const QString &bareJid : m_xmppClient.rosterManager().getRosterBareJids()) {
             const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
             Q_UNUSED(roster);
-            //qDebug() << roster.bareJid() <<  roster.name();
+            qDebug() << roster.bareJid() <<  roster.name();
             m_vCardCache.requestVCard(bareJid);
         }      
     });
 
     connect(&m_xmppClient.rosterManager(), &QXmppRosterManager::presenceChanged, [&](const QString& bareJid, const QString& resource) {
         QMap<QString, QXmppPresence> presences = m_xmppClient.rosterManager().getAllPresencesForBareJid(bareJid);
-        QXmppPresence& presence = presences[resource];        
+        QXmppPresence& presence = presences[resource];
 
         const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
         m_presenceHash[roster.bareJid()] = presence;
         if (presence.availableStatusType() == QXmppPresence::Online) {
-            qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText();
+          //  qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText();
         }
+
+        qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText() << presence.type() << presence.availableStatusType();
 
         utils::singleShotTimer(3000, [&]() {
             if (!m_signInCompleted) {
