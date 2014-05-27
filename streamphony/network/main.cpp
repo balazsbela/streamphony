@@ -32,13 +32,13 @@ int main(int argc, char *argv[])
 
     DhtManager dht(&app);
     QObject::connect(&xmppManager, &XmppManager::signInCompleted, [&]() {
-       QCryptographicHash hash(QCryptographicHash::Sha1);
-       hash.addData(xmppManager.userUniqueId(xmppManager.ownJid()));
 
-       qDebug() << "OwnId:" << hash.result().toHex();
+       const QByteArray &hash = xmppManager.userUniqueId(xmppManager.ownJid());
+
+       qDebug() << "OwnId:" << hash.toHex();
 
        bdNodeId ownId;
-       bdStdNodeIdFromArray(&ownId, hash.result());
+       bdStdNodeIdFromArray(&ownId, hash);
        dht.start(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"));
     });
 
