@@ -63,6 +63,7 @@ void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, con
 
 DhtManager::~DhtManager()
 {
+    m_udpBitDht->stopDht();
 }
 
 void DhtManager::enable(bool on)

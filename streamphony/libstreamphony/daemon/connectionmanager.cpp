@@ -30,18 +30,21 @@ ConnectionManager::~ConnectionManager()
 void ConnectionManager::populateNodeHash()
 {
     auto launchQuery = [&] (const QByteArray &uniqueData, const QString &jid) {
-        QString hash = uniqueData.toHex();
         Q_ASSERT(!m_xmppManager->fullName(jid).isEmpty());
 
-        if (nodeIdMap[hash] != nullptr && nodeIdMap[hash]->jid() == jid) {
-            if (nodeIdMap[hash]->queryRunning()) {
-                //debugConnectionManager() << "Query already running, not launching again!";
-                //return;
+        if (m_xmppManager->fullName(jid).startsWith("Sebes")) {
+            QString hash = uniqueData.toHex();
+
+            if (nodeIdMap[hash] != nullptr && nodeIdMap[hash]->jid() == jid) {
+                if (nodeIdMap[hash]->queryRunning()) {
+                    //debugConnectionManager() << "Query already running, not launching again!";
+                    //return;
+                }
             }
+            debugConnectionManager() << "Launching ip query for:" << jid << ":" << m_xmppManager->fullName(jid) << hash;
+            nodeIdMap[hash] = QSharedPointer<NodeStatus>(new NodeStatus(jid, true));
+            m_dhtManager->findNodeByHash(uniqueData);
         }
-        debugConnectionManager() << "Launching ip query for:" << jid << ":" << m_xmppManager->fullName(jid) << hash;
-        nodeIdMap[hash] = QSharedPointer<NodeStatus>(new NodeStatus(jid, true));
-        m_dhtManager->findNodeByHash(uniqueData);
     };
 
     connect(m_dhtManager.data(), &DhtManager::peerIpFound, [&](const QString &id, const QHostAddress &ip, const quint16 port) {
