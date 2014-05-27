@@ -44,8 +44,8 @@ void XmppManager::signIn()
 
         const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
         m_presenceHash[roster.bareJid()] = presence;
-        if (presence.type() == QXmppPresence::Available) {
-            qDebug() << roster.name() << roster.bareJid() << "Available" << presence.statusText();            
+        if (presence.availableStatusType() == QXmppPresence::Online) {
+            qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText();
         }
 
         utils::singleShotTimer(3000, [&]() {
@@ -80,7 +80,7 @@ QStringList XmppManager::allAvailableJids() const
 {
     const QList<QString> &keys = m_presenceHash.keys();
     QList<QString>::const_iterator availableJids =  std::find_if(keys.begin(),keys.end(), [&](const QString &key) -> bool {
-        return m_presenceHash[key].type() == QXmppPresence::Available;
+        return m_presenceHash[key].availableStatusType() == QXmppPresence::Online;
     });
 
     QStringList results;
