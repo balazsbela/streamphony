@@ -36,8 +36,7 @@ void ConnectionManager::populateNodeHash()
     for (const QString &jid : m_xmppManager->allAvailableJids()) {
         const QByteArray uniqueData = m_xmppManager->userUniqueId(jid);
         const QString hash = QString::fromUtf8(m_dhtManager->hash(uniqueData));
-        debugConnectionManager() << "Launching ip query for:" << jid << ":" << hash;
-
+        debugConnectionManager() << "Launching ip query for:" << jid << ":" << m_xmppManager->fullName(jid);
         nodeIdMap[hash] = jid;
         m_dhtManager->findNode(hash);
     }

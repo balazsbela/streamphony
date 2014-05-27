@@ -53,6 +53,7 @@ void XmppManager::signIn()
                 m_signInCompleted = true;
                 emit signInCompleted();
                 QXmppPresence presence(QXmppPresence::Available);
+                presence.setAvailableStatusType(QXmppPresence::Online);
                 m_xmppClient.setClientPresence(presence);
             }
         }, this);
@@ -99,10 +100,18 @@ const QXmppRosterIq::Item XmppManager::roster(const QString &bareJid)
 QByteArray XmppManager::userUniqueId(const QString &bareJid)
 {
     auto vCard = m_vCardCache.getVCard(bareJid);
-    return vCard.firstName().toUtf8() + vCard.lastName().toUtf8() + vCard.photo();
+    Q_ASSERT(!vCard.fullName().isEmpty());
+    Q_ASSERT(vCard.photo().size() >  0);
+    return vCard.fullName().toUtf8() + vCard.photo();
 }
 
 QString XmppManager::ownJid()
 {
     return m_xmppClient.configuration().jidBare();
 }
+
+QString XmppManager::fullName(const QString &bareJid)
+{
+    return m_vCardCache.getVCard(bareJid).fullName();
+}
+

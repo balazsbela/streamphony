@@ -23,6 +23,7 @@ public:
     const QXmppRosterIq::Item roster(const QString &bareJid);
     QByteArray userUniqueId(const QString &bareJid);
     QString ownJid();
+    QString fullName(const QString &bareJid);
 
 signals:
     void signInCompleted();

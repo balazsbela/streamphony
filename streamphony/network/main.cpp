@@ -11,7 +11,7 @@
 #include <QCryptographicHash>
 #include <QDebug>
 
-static const int MINIMAL_NUMBER_OF_NODES = 5;
+static const int MINIMAL_NUMBER_OF_NODES = 2;
 
 int main(int argc, char *argv[])
 {

@@ -40,6 +40,7 @@ vCardCache::vCardCache(QXmppClient* client) : QObject(client),
 
 void vCardCache::vCardReceived(const QXmppVCardIq& vcard)
 {
+    //qDebug() << "vCard Received from:" << vcard.from() << vcard.fullName();
     QString from = vcard.from();
 
     if(from.isEmpty() && m_client)
