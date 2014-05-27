@@ -184,27 +184,11 @@ void DhtManager::foundPeer(const bdNodeId *id, uint32_t status)
     }
 }
 
-bool DhtManager::findNode(const QString &dataToHash)
-{
-    bdNodeId friendId;
-    bdStdNodeIdFromArray(&friendId, hash(dataToHash));
-
-    return findNode(&friendId);
-}
-
 bool DhtManager::findNodeByHash(const QByteArray &hash)
 {
     bdNodeId friendId;
     bdStdNodeIdFromArray(&friendId, hash.data());
-
     return findNode(&friendId);
-}
-
-QByteArray DhtManager::hash(const QString &data) const
-{
-    QCryptographicHash friendHash(QCryptographicHash::Sha1);
-    friendHash.addData(data.toStdString().c_str());
-    return friendHash.result();
 }
 
 void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags) {

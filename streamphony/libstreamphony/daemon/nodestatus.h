@@ -48,8 +48,8 @@ public:
     }
 
 private:
-    bool m_queryRunning = false;
     QString m_jid;
+    bool m_queryRunning = false;
 };
 
 #endif // NODESTATUS_H

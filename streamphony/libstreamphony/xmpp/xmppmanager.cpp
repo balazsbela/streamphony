@@ -8,6 +8,7 @@
 
 #include <QDebug>
 #include <QStringList>
+#include <QCryptographicHash>
 
 static const QString XMPP_SERVER = QStringLiteral("chat.facebook.com");
 
@@ -105,9 +106,13 @@ QByteArray XmppManager::userUniqueId(const QString &bareJid)
     if (!vCard.fullName().isEmpty())
         m_vCardCache.requestVCard(bareJid);
 
-    qDebug() << "Returning userUniqueId for " << vCard.fullName() << " photo " << vCard.photo().size();
+    QCryptographicHash hash(QCryptographicHash::Sha1);
+    hash.addData(vCard.photo());
 
-    return vCard.photo();
+    const QString userHash = hash.result().toHex();
+    qDebug() << "Returning userUniqueId for " << userHash;
+
+    return hash.result();
 }
 
 QString XmppManager::ownJid()

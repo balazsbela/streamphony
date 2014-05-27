@@ -30,9 +30,7 @@ public:
     bool findNode(bdNodeId *peerId);
     bool dropNode(bdNodeId *peerId);
 
-    bool findNode(const QString &dataToHash);    
     bool findNodeByHash(const QByteArray &hash);
-    QByteArray hash(const QString &data) const;    
     int nodeCount();
 
     // Callback handlers
