@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     QTimer dhtReadyTimer;
     dhtReadyTimer.setInterval(10000);
     QObject::connect(&dhtReadyTimer, &QTimer::timeout, [&]() {
-        if (dht.nodeCount() > MINIMAL_NUMBER_OF_NODES) {
+        if (dht.nodeCount() >= MINIMAL_NUMBER_OF_NODES) {
             connectionManager.populateNodeHash();
             dhtReadyTimer.stop();
         }

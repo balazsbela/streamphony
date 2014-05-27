@@ -100,8 +100,9 @@ const QXmppRosterIq::Item XmppManager::roster(const QString &bareJid)
 QByteArray XmppManager::userUniqueId(const QString &bareJid)
 {
     auto vCard = m_vCardCache.getVCard(bareJid);
-    Q_ASSERT(!vCard.fullName().isEmpty());
-    Q_ASSERT(vCard.photo().size() >  0);
+    if (!vCard.fullName().isEmpty())
+        m_vCardCache.requestVCard(bareJid);
+
     return vCard.fullName().toUtf8() + vCard.photo();
 }
 
