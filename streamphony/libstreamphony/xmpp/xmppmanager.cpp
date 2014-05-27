@@ -107,7 +107,7 @@ QByteArray XmppManager::userUniqueId(const QString &bareJid)
 
     qDebug() << "Returning userUniqueId for " << vCard.fullName() << " photo " << vCard.photo().size();
 
-    return vCard.fullName().toUtf8() + vCard.photo();
+    return vCard.photo();
 }
 
 QString XmppManager::ownJid()
