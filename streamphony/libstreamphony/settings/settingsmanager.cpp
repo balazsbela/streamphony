@@ -11,6 +11,7 @@ static const QString SETTINGS_FILE = QStringLiteral("/settings.ini");
 static const QString EMAIL_KEY = "email";
 static const QString PASSWORD_KEY = "password";
 static const QString XMPP_USERNAME_KEY = "xmppUsername";
+static const QString HTTP_PORT_KEY = "httpPort";
 
 //Debug
 
@@ -82,5 +83,18 @@ void SettingsManager::setXmppUsername(const QString &newXmppUsername)
     if (newXmppUsername != xmppUsername()) {
         m_settings->setValue(XMPP_USERNAME_KEY, newXmppUsername);
         emit xmppUsernameChanged(newXmppUsername);
+    }
+}
+
+quint32 SettingsManager::httpPort() const
+{
+    return m_settings->value(HTTP_PORT_KEY, {}).toUInt();
+}
+
+void SettingsManager::setHttpPort(quint32 port)
+{
+    if (port != httpPort()) {
+        m_settings->setValue(HTTP_PORT_KEY, QVariant(port));
+        emit httpPortChanged(port);
     }
 }

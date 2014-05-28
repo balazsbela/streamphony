@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     xmppManager.signIn();
 
     LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
-    LightHttpDaemon daemon(MIN_PORT, MAX_PORT, &app);
+    LightHttpDaemon daemon(settingsManager.httpPort(), MIN_PORT, MAX_PORT, &app);
     daemon.setContentResolver(resolver);
 
     uint16_t port = 6775;

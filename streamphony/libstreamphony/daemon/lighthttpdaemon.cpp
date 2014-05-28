@@ -11,12 +11,17 @@ const QString CONTENT_LENGTH_HEADER = QStringLiteral("Content-Length: %1 \r\n\r\
 
 const int MAX_PENDING_CONNECTIONS = 300; // This is sparta!
 
-LightHttpDaemon::LightHttpDaemon(quint32 minPort, quint32 maxPort, QObject *parent) :
+LightHttpDaemon::LightHttpDaemon(quint32 preferredPort, quint32 minPort, quint32 maxPort, QObject *parent) :
     QTcpServer(parent)
 {           
     quint32 port = minPort;
-    while (!listen(QHostAddress::Any, port) && port <= maxPort) {
-        port++;
+
+    if (!listen(QHostAddress::Any, preferredPort)) {
+        while (!listen(QHostAddress::Any, port) && port <= maxPort) {
+            port++;
+        }
+    } else {
+        port = preferredPort;
     }
 
     if (port <= maxPort) {
