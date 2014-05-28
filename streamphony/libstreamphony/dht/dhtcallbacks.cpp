@@ -1,5 +1,6 @@
 #include "dhtcallbacks.h"
 #include "dhtdebug.h"
+#include "udp/udpbitdht.h"
 
 DhtCallbacks::DhtCallbacks(DhtManager *parent)
     : BitDhtCallback(),
@@ -13,12 +14,16 @@ DhtCallbacks::~DhtCallbacks()
 
 int DhtCallbacks::dhtNodeCallback(const bdId *node, uint32_t peerflags)
 {
+    bdStackMutex stack(resultsMtx); /********** MUTEX LOCKED *************/
+
     m_parent->dhtNodeCallback(node, peerflags);
     return 0;
 }
 
 int DhtCallbacks::dhtPeerCallback(const bdId *id, uint32_t status)
 {
+    bdStackMutex stack(resultsMtx); /********** MUTEX LOCKED *************/
+
     debugDht() << "DHT Peer Callback" << status << endl;
     bdStdPrintNodeId(std::cout, &id->id);    
 
@@ -26,13 +31,11 @@ int DhtCallbacks::dhtPeerCallback(const bdId *id, uint32_t status)
     return 0;
 }
 
-int DhtCallbacks::dhtValueCallback(const bdId *id, std::string key, uint32_t status)
+int DhtCallbacks::dhtValueCallback(const bdId *id, std::string hash, uint32_t status)
 {
+    bdStackMutex stack(resultsMtx); /********** MUTEX LOCKED *************/
     debugDht() << "DHT Value Callback" << status << endl;
-    bdStdPrintNodeId(std::cout, &id->id);
-
-    debugDht() << endl << "Key:" << QString::fromStdString(key);
-
+    m_parent->dhtValueCallback(id, hash, status);
     return 0;
 }
 
@@ -48,6 +51,8 @@ int DhtCallbacks::dhtConnectCallback(const bdId *srcId, const bdId *proxyId, con
     Q_UNUSED(cbtype);
     Q_UNUSED(errcode);
 
+    bdStackMutex stack(resultsMtx); /********** MUTEX LOCKED *************/
+
     debugDht() << "dhtConnectCallback:";
     bdStdPrintNodeId(std::cout, &srcId->id);
     return 0;
@@ -58,6 +63,8 @@ int DhtCallbacks::dhtInfoCallback(const bdId *id, uint32_t type, uint32_t flags,
     Q_UNUSED(flags);
     Q_UNUSED(id);
     Q_UNUSED(type);
+
+    bdStackMutex stack(resultsMtx); /********** MUTEX LOCKED *************/
 
     debugDht() << "dhtInfoCallback:" << QString::fromStdString(info);
     return 0;

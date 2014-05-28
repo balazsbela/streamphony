@@ -207,7 +207,7 @@ bool	bdMsgHistoryList::validPeer()
 
 
 #define MAX_PING_PER_MINUTE  	2
-#define MAX_QUERY_PER_MINUTE 	2
+#define MAX_QUERY_PER_MINUTE 	5
 
 bool bdMsgHistoryList::analysePeer()
 

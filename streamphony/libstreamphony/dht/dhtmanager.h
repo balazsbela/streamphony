@@ -34,33 +34,38 @@ public:
     bool isEnabled();
     bool isActive();
 
-    bool findNode(bdNodeId *peerId);
-    bool dropNode(bdNodeId *peerId);
-
     bool findNodeByHash(const QByteArray &hash);
     int nodeCount();
 
     // Callback handlers
     void foundPeer(const bdId *id, uint32_t status);
     void dhtNodeCallback(const bdId *node, uint32_t peerflags);    
+    void dhtValueCallback(const bdId *id, std::string hash, uint32_t status);
 
 signals:
     void peerIpFound(const QString &nodeId, const QHostAddress &ip, const quint16 port);
 
 private:
-    void setupPushTimer();
+    void setupQueryTimer();
+    void pollFile();
+
+    bool findNode(bdNodeId *peerId);
+    bool dropNode(bdNodeId *peerId);
 
 private:
     /* real DHT classes */
     QScopedPointer<UdpStack> m_stack;
     QScopedPointer<UdpBitDht> m_udpBitDht;
     QScopedPointer<bdSpace> m_bdSpace;    
+
     quint64 m_nodeCount = 0;
     bool m_initialized = 0;
     bdNodeId *m_ownId = nullptr;
     std::string m_ownIp;
     QQueue<dhtNode> m_nodeQueue;
-    QTimer m_pushTimer;
+    QQueue<QByteArray> m_pendingForQuery;
+    QSet<QByteArray> m_pendingQueries;
+    QTimer m_queryTimer;
 
     friend class DhtCallbacks;
 };

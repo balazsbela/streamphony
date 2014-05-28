@@ -39,7 +39,8 @@ HEADERS += \
     daemon/portrange.h \
     daemon/connectionmanager.h \
     daemon/node.h \
-    daemon/nodestatus.h
+    daemon/nodestatus.h \
+    dht/dhtconversions.h
 
 #unix {
 #    target.path = /usr/lib

@@ -2,6 +2,8 @@
 #include "dhtdebug.h"
 #include "dhtcallbacks.h"
 #include "singleshottimer.h"
+#include "dhtconversions.h"
+
 #include "bitdht/bdiface.h"
 
 #include <stdio.h>
@@ -13,35 +15,14 @@
 
 #include <QCryptographicHash>
 #include <QTcpSocket>
+#include <QFile>
 
-static const int PEER_DISCOVERY_TIMEOUT = 180000; //msecs
-static const int RANDOM_PEER_LIMIT = 13;
 static const std::string SECRET = "StreamphonySecret";
 static const int PUSH_INTERVAL = 60000;
+static const QString DHT_FILE = "hashSet.txt";
+static const int MAX_QUERY_PER_MINUTE = 5;
 
-// Conversion utilities to make the library usable.
-
-bdId toBdId(const dhtNode &node)
-{
-    bdNodeId nodeId;
-    memcpy(nodeId.data, node.id.data(), BITDHT_KEY_LEN);
-    return bdId(nodeId, node.addr);
-}
-
-QByteArray toByteArray(const bdId *id)
-{
-    char* idArray = new char[BITDHT_KEY_LEN + 1];
-    memcpy(idArray, id->id.data, BITDHT_KEY_LEN);
-    idArray[BITDHT_KEY_LEN + 1] = '\0';
-    return QByteArray(idArray);
-}
-
-QString nodeId(const bdId *id)
-{
-    return toByteArray(id).toHex();
-}
-
-// Constructor
+using namespace DhtConversions;
 
 DhtManager::DhtManager(QObject *parent) : QObject(parent)
 {    
@@ -49,7 +30,7 @@ DhtManager::DhtManager(QObject *parent) : QObject(parent)
 
 void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapFile)
 {
-    m_ownId = ownId; 
+    m_ownId = ownId;
 
     qDebug() << QString::fromStdString(m_ownIp);
 
@@ -89,7 +70,10 @@ void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, con
         qDebug() << m_udpBitDht->statsNetworkSize();
     }, nullptr);
 
-    setupPushTimer();
+    setupQueryTimer();
+
+    QFile file(DHT_FILE);
+    file.remove();
 }
 
 
@@ -176,10 +160,10 @@ void DhtManager::foundPeer(const bdId *id, uint32_t status)
 }
 
 bool DhtManager::findNodeByHash(const QByteArray &hash)
-{
-    bdNodeId friendId;
-    bdStdNodeIdFromArray(&friendId, hash.data());
-    return findNode(&friendId);
+{           
+    m_pendingQueries.insert(hash);
+    m_pendingForQuery.enqueue(hash);
+    return true;
 }
 
 void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags)
@@ -192,12 +176,13 @@ void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags)
 
     m_nodeQueue.enqueue(dnode);
 
-    debugDht() << "Discovered node:" << nodeId(node) << "with ip:" <<
+    debugDht() << "Discovered node:" << bdIdToString(node) << "with ip:" <<
                   inet_ntoa(node->addr.sin_addr) << peerflags;
+}
 
-// Not from the thread that own the mutex.
-//    m_udpBitDht->postHash(targetId, *m_ownId, m_ownIp, SECRET);
-//    debugDht() << "Posting hash to new node:" << QString::fromStdString(m_ownIp);
+void DhtManager::dhtValueCallback(const bdId *id, std::string hash, uint32_t status)
+{
+    qDebug() << "Value found:" << bdIdToString(id) << QString::fromStdString(hash);
 }
 
 int DhtManager::nodeCount()
@@ -210,19 +195,69 @@ void DhtManager::setOwnIp(const std::string &ip)
     m_ownIp = ip;
 }
 
-void DhtManager::setupPushTimer()
+void DhtManager::setupQueryTimer()
 {
-    m_pushTimer.setInterval(PUSH_INTERVAL);
-    connect(&m_pushTimer,&QTimer::timeout, [&]() {
+    m_queryTimer.setInterval(PUSH_INTERVAL);
+    connect(&m_queryTimer,&QTimer::timeout, [&]() {
+        // Send put messages about our ip and query for ips
         while (!m_nodeQueue.isEmpty()) {
             dhtNode dnode = m_nodeQueue.dequeue();
             const bdId &targetId = toBdId(dnode);
-            qDebug() << "Pushing our credentials to node:" << nodeId(&targetId) << "with ip" << inet_ntoa(targetId.addr.sin_addr)
+            qDebug() << "Pushing our credentials to node:" << bdIdToString(&targetId) << "with ip" << inet_ntoa(targetId.addr.sin_addr)
                      << "value is" << QString::fromStdString(m_ownIp);
 
             bdId nonConst = targetId;
             m_udpBitDht->postHash(nonConst, *m_ownId, m_ownIp, SECRET);
+
+            for (const QByteArray &id : m_pendingQueries) {
+                bdNodeId key = fromByteArray(id);
+
+                qDebug() << "Getting hash from node " << bdIdToString(&targetId) << "for key"
+                         << bdNodeIdToString(&key);
+                m_udpBitDht->getHash(nonConst, key);
+            }
         }
+
+        // Launch findNode queries for as many nodes as we are allowed
+        int index = 0;
+        while(!m_pendingForQuery.isEmpty() && index < MAX_QUERY_PER_MINUTE) {
+            const QByteArray &hash = m_pendingForQuery.dequeue();
+
+            bdNodeId friendId;
+            bdStdNodeIdFromArray(&friendId, hash.data());
+            findNode(&friendId);
+
+            index++;
+        }
+
+        // Check the file for results
+        pollFile();
     });
-    m_pushTimer.start();
+    m_queryTimer.start();
+}
+
+void DhtManager::pollFile()
+{
+    QFile dhtFile(DHT_FILE);
+    if (dhtFile.open(QIODevice::ReadOnly)) {
+        QTextStream in(&dhtFile);
+        while (!in.atEnd()) {
+            QString line = in.readLine();
+            QStringList tokens = line.split(" ");
+            if (tokens.size() != 3) {
+                continue;
+            }
+            QString nodeId = tokens.first();
+            if (m_pendingQueries.contains(QByteArray::fromHex(nodeId.toUtf8()))) {
+                QString host = tokens[1];
+                if (tokens[2] == QString::fromStdString(SECRET)) {
+                    emit peerIpFound(nodeId, QHostAddress(host), 0);
+                    qDebug() << "Peer found:" << nodeId << host;
+                }
+            }
+        }
+    }
+
+    dhtFile.close();
+    dhtFile.remove();
 }

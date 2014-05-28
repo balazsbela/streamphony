@@ -2073,7 +2073,8 @@ void bdNode::msgin_reply_hash(bdId *id, bdToken *transId, bdToken *token,
     //       function to finish.
     mGetHashResultReady = true;
     mGetHashBdId = *id;
-    mGetHashKey = values.front();
+    if (!values.empty())
+        mGetHashKey = values.front();
 }
 
 void bdNode::msgin_reply_nearest(bdId *id, bdToken *transId, bdToken *token, std::list<bdId> &nodes)

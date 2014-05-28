@@ -27,6 +27,7 @@
 #include "bitdht/bdhash.h"
 #include "bitdht/bdstddht.h"
 #include <iostream>
+#include <fstream>
 
 bdHashEntry::bdHashEntry(std::string value, std::string secret,
                          time_t lifetime, time_t store)
@@ -140,21 +141,34 @@ int 	bdHashSet::modify(std::string key, bdHashEntry *entry, uint32_t modFlags)
 
 int	bdHashSet::printHashSet(std::ostream &out)
 {
+    std::ofstream file;
+    file.open("hashSet.txt", std::ios_base::app);
+
 	time_t now = time(NULL);
 	std::multimap<std::string, bdHashEntry>::iterator it;
 	out << "Hash: ";
 	bdStdPrintNodeId(out, &mId); // Allowing "Std" as we dont need dht functions everywhere.
 	out << std::endl;
 
+    bdStdPrintNodeId(file, &mId);
+
 	for(it = mEntries.begin(); it != mEntries.end();it++)
 	{
 		time_t age = now - it->second.mStoreTS;
 		out << "\tK:" << bdStdConvertToPrintable(it->first);
 		out << " V:" << bdStdConvertToPrintable(it->second.mValue);
+
+        file << " " << bdStdConvertToPrintable(it->second.mValue) << " ";
+
 		out << " A:" << age << " L:" << it->second.mLifetime;
 		out << " S:" << bdStdConvertToPrintable(it->second.mSecret);
+
+        file << bdStdConvertToPrintable(it->second.mSecret) << std::endl;
+
 		out << std::endl;
 	}
+
+    file.close();
 	return 1;
 }
 
