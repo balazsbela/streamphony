@@ -11,6 +11,12 @@
 #include <QTimer>
 #include <QHostAddress>
 #include <QHash>
+#include <QQueue>
+
+struct dhtNode {
+    QByteArray id;
+    struct sockaddr_in addr;
+};
 
 class DhtManager : public QObject
 {
@@ -42,6 +48,9 @@ signals:
     void peerIpFound(const QString &nodeId, const QHostAddress &ip, const quint16 port);
 
 private:
+    void setupPushTimer();
+
+private:
     /* real DHT classes */
     QScopedPointer<UdpStack> m_stack;
     QScopedPointer<UdpBitDht> m_udpBitDht;
@@ -50,6 +59,8 @@ private:
     bool m_initialized = 0;
     bdNodeId *m_ownId = nullptr;
     std::string m_ownIp;
+    QQueue<dhtNode> m_nodeQueue;
+    QTimer m_pushTimer;
 
     friend class DhtCallbacks;
 };

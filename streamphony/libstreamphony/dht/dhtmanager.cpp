@@ -16,22 +16,32 @@
 
 static const int PEER_DISCOVERY_TIMEOUT = 180000; //msecs
 static const int RANDOM_PEER_LIMIT = 13;
-
 static const std::string SECRET = "StreamphonySecret";
+static const int PUSH_INTERVAL = 60000;
 
-static QHostAddress retrieveOwnLocalIp()
+// Conversion utilities to make the library usable.
+
+bdId toBdId(const dhtNode &node)
 {
-    QTcpSocket socket;
-    socket.connectToHost("8.8.8.8", 53); // google DNS, or something else reliable
-    if (socket.waitForConnected()) {
-        return socket.localAddress();
-    } else {
-        qWarning()
-            << "could not determine local IPv4 address:"
-            << socket.errorString();
-    }
-    return {};
+    bdNodeId nodeId;
+    memcpy(nodeId.data, node.id.data(), BITDHT_KEY_LEN);
+    return bdId(nodeId, node.addr);
 }
+
+QByteArray toByteArray(const bdId *id)
+{
+    char* idArray = new char[BITDHT_KEY_LEN + 1];
+    memcpy(idArray, id->id.data, BITDHT_KEY_LEN);
+    idArray[BITDHT_KEY_LEN + 1] = '\0';
+    return QByteArray(idArray);
+}
+
+QString nodeId(const bdId *id)
+{
+    return toByteArray(id).toHex();
+}
+
+// Constructor
 
 DhtManager::DhtManager(QObject *parent) : QObject(parent)
 {    
@@ -78,6 +88,8 @@ void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, con
     utils::singleShotTimer(15000, [&]() {
         qDebug() << m_udpBitDht->statsNetworkSize();
     }, nullptr);
+
+    setupPushTimer();
 }
 
 
@@ -126,34 +138,6 @@ bool DhtManager::findNode(bdNodeId *peerId)
 
     m_udpBitDht->addFindNode(peerId, BITDHT_QFLAGS_UPDATES);
 
-//    auto poll = [this, peerId]() -> bool {
-//        struct sockaddr_in peerAddr;
-//        if (m_udpBitDht->getDhtPeerAddress(peerId, peerAddr)) {
-//            qDebug() << "FOUND PEER:" << endl;
-//            qDebug() << inet_ntoa(peerAddr.sin_addr) << ":" << htons(peerAddr.sin_port) << endl;
-
-//            std::stringstream stream;
-//            bdStdPrintNodeId(stream, peerId);
-//            quint16 port = htons(peerAddr.sin_port);
-//            emit peerIpFound(QString::fromStdString(stream.str()),
-//                             QHostAddress(QString(inet_ntoa(peerAddr.sin_addr))), port);
-//            return true;
-//        } else {
-//            qDebug() << endl << endl << "Couldn't find peer yet!" << endl;
-//            return false;
-//        }
-//    };
-
-//    QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
-//    QSharedPointer<QTimer> timer(new QTimer(this));
-
-//    timer->setInterval(10000);
-//    connect(timer.data(), &QTimer::timeout, [=]() {
-//        if ((*callback)())
-//            timer->stop();
-//    });
-//    timer->start();
-
     return true;
 }
 
@@ -170,40 +154,25 @@ bool DhtManager::dropNode(bdNodeId *peerId)
 
 void DhtManager::foundPeer(const bdId *id, uint32_t status)
 {      
-//    auto poll = [&]() -> bool {
-//        qDebug() << "Called poll :" << status ;
+
+    if (status != BITDHT_QUERY_FOUND_CLOSEST || status != BITDHT_QUERY_SUCCESS) {
+
         bdStdPrintNodeId(std::cout, &id->id);
+        qDebug() << "Got status for query:" << status;
+        return;
+    }
 
-//        if (m_udpBitDht->getDhtPeerAddress(id, peerAddr) == 1) {
-            quint16 port = htons(id->addr.sin_port);
+    bdStdPrintNodeId(std::cout, &id->id);
+    quint16 port = htons(id->addr.sin_port);
 
-            qDebug() << "FOUND PEER:" << endl;
-            qDebug() << inet_ntoa(id->addr.sin_addr) << ":" << port << endl;
+    qDebug() << "FOUND PEER:" << endl;
+    qDebug() << inet_ntoa(id->addr.sin_addr) << ":" << port << endl;
 
-            std::stringstream stream;
-            bdStdPrintNodeId(stream, &id->id);
+    std::stringstream stream;
+    bdStdPrintNodeId(stream, &id->id);
 
-            emit peerIpFound(QString::fromStdString(stream.str()),
-                             QHostAddress(QString(inet_ntoa(id->addr.sin_addr))), port);
-//            return true;
-//        } else {
-//            qDebug() << "Couldn't get peer address yet!";
-//            return false;
-//        }
-//    };
-
-//    if (!poll()) {
-//        QSharedPointer<decltype(poll)> callback(new decltype(poll)(poll));
-//        QSharedPointer<QTimer> timer(new QTimer(this));
-
-//        timer->setInterval(1000);
-//        connect(timer.data(), &QTimer::timeout, [=]() {
-//            if ((*callback)()) {
-//                timer->stop();
-//            }
-//        });
-//        timer->start();
-//    }
+    emit peerIpFound(QString::fromStdString(stream.str()),
+                     QHostAddress(QString(inet_ntoa(id->addr.sin_addr))), port);
 }
 
 bool DhtManager::findNodeByHash(const QByteArray &hash)
@@ -217,7 +186,14 @@ void DhtManager::dhtNodeCallback(const bdId *node, uint32_t peerflags)
 {
     m_nodeCount++;
 
-    bdId targetId = *node;
+    dhtNode dnode;
+    dnode.id = toByteArray(node);
+    dnode.addr = node->addr;
+
+    m_nodeQueue.enqueue(dnode);
+
+    debugDht() << "Discovered node:" << nodeId(node) << "with ip:" <<
+                  inet_ntoa(node->addr.sin_addr) << peerflags;
 
 // Not from the thread that own the mutex.
 //    m_udpBitDht->postHash(targetId, *m_ownId, m_ownIp, SECRET);
@@ -234,3 +210,19 @@ void DhtManager::setOwnIp(const std::string &ip)
     m_ownIp = ip;
 }
 
+void DhtManager::setupPushTimer()
+{
+    m_pushTimer.setInterval(PUSH_INTERVAL);
+    connect(&m_pushTimer,&QTimer::timeout, [&]() {
+        while (!m_nodeQueue.isEmpty()) {
+            dhtNode dnode = m_nodeQueue.dequeue();
+            const bdId &targetId = toBdId(dnode);
+            qDebug() << "Pushing our credentials to node:" << nodeId(&targetId) << "with ip" << inet_ntoa(targetId.addr.sin_addr)
+                     << "value is" << QString::fromStdString(m_ownIp);
+
+            bdId nonConst = targetId;
+            m_udpBitDht->postHash(nonConst, *m_ownId, m_ownIp, SECRET);
+        }
+    });
+    m_pushTimer.start();
+}
