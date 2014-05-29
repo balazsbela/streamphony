@@ -7,7 +7,7 @@
 include(../global.pri);
 include(../utils/utils.pri);
 
-QT += core network xml gui
+QT += core network xml gui phonon4qt5
 
 TARGET = network
 CONFIG   += console

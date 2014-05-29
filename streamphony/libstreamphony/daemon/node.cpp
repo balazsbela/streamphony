@@ -20,7 +20,11 @@ Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObjec
 
     connect(&m_socket, &QTcpSocket::connected, [&]() {
         tryingToConnect = false;
-        debugNode() << "Node connected:" << m_id << m_ip;
+        debugNode() << "Node connected:" << m_id << m_ip;                
+        const QString url = QStringLiteral("http://") + m_ip.toString() + QStringLiteral(":") + QString::number(m_port) + "/1.mp3";
+        debugNode() << url;
+        m_player.play(url);
+
     });
 
     connect(&m_socket, &QTcpSocket::disconnected, [&]() {

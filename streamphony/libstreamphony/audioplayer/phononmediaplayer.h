@@ -22,7 +22,7 @@ class PhononMediaPlayer : public QObject
 public:
     explicit PhononMediaPlayer(QObject *parent = 0);
     ~PhononMediaPlayer() override;
-    void play();
+    void play(const QString &url);
 
 private:
     QScopedPointer<Phonon::MediaObject> m_mediaObject;

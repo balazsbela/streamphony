@@ -1,6 +1,8 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include "audioplayer/phononmediaplayer.h"
+
 #include <QObject>
 #include <QHostAddress>
 #include <QTcpSocket>
@@ -27,6 +29,7 @@ private:
     QTcpSocket m_socket;
     quint32 m_port = 0;
     bool tryingToConnect = false;
+    PhononMediaPlayer m_player;
 };
 
 #endif // NODE_H

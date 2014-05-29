@@ -17,13 +17,9 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-
 SOURCES += main.cpp \
-    phononmediaplayer.cpp \
-    mediastream.cpp
-
-HEADERS += \
-    phononmediaplayer.h \
-    mediastream.h
 
 DEFINES += DEBUG_AUDIO_PLAYER
+
+addModule(libstreamphony, libstreamphony.a)
+include(../libstreamphony/modules.pri);

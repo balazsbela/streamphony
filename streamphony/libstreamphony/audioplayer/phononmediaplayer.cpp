@@ -22,7 +22,7 @@ PhononMediaPlayer::PhononMediaPlayer(QObject *parent)
     m_mediaObject->setCurrentSource(Phonon::MediaSource(&m_buffer));
 }
 
-void PhononMediaPlayer::play() {
+void PhononMediaPlayer::play(const QString &urlString) {
     QNetworkAccessManager *networkManager = new QNetworkAccessManager(this);
     QNetworkRequest request;
 
@@ -35,7 +35,7 @@ void PhononMediaPlayer::play() {
 //    cat /home/balazsbela/devel/streamphony/build-streamphony-CLANG-Debug/audioplayer/1.mp3
 // [balazsbela@archlinux ~]$ ./netcat.sh |nc -v -l -p 8081
 
-    const QUrl url(QStringLiteral("http://127.0.0.1:8081/1.mp3"));
+    const QUrl url(urlString);
 
     request.setUrl(url);
 
