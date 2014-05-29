@@ -37,7 +37,7 @@ MediaStream::MediaStream(const QSharedPointer<QNetworkReply> &reply, QObject *pa
         m_data = m_networkReply->readAll();
         connect(m_networkReply.data(), &QNetworkReply::readyRead, [&]() {
             m_data += m_networkReply->readAll();
-            qDebug() << m_data;
+            qDebug() << m_data.size();
         });
     }
 
