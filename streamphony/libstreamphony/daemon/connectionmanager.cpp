@@ -109,7 +109,7 @@ void ConnectionManager::loadNodes() {
         const QHostAddress &host = QHostAddress(tokens[1]);
 
         bool ok = false;
-        const quint32 port = tokens[3].toUInt(&ok);
+        const quint32 port = tokens[2].toUInt(&ok);
         Q_ASSERT(ok);
 
         m_nodeHash[tokens.first()] = QSharedPointer<Node>(new Node(id, host, port));
