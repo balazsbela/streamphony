@@ -199,6 +199,7 @@ void DhtManager::setupQueryTimer()
 {
     m_queryTimer.setInterval(PUSH_INTERVAL);
     connect(&m_queryTimer,&QTimer::timeout, [&]() {
+
         // Send put messages about our ip and query for ips
         while (!m_nodeQueue.isEmpty()) {
             dhtNode dnode = m_nodeQueue.dequeue();
@@ -212,10 +213,14 @@ void DhtManager::setupQueryTimer()
             for (const QByteArray &id : m_pendingQueries) {
                 bdNodeId key = fromByteArray(id);
 
-                qDebug() << "Getting hash from node " << bdIdToString(&targetId) << "for key"
-                         << bdNodeIdToString(&key);
+//                qDebug() << "Getting hash from node " << bdIdToString(&targetId) << "for key"
+//                         << bdNodeIdToString(&key);
                 m_udpBitDht->getHash(nonConst, key);
             }
+
+            // If we accidentally stumbled upon a peer we're searching for
+            if (m_pendingQueries.contains(toByteArray(&targetId)))
+                foundPeer(&targetId, BITDHT_QUERY_SUCCESS);
         }
 
         // Launch findNode queries for as many nodes as we are allowed
@@ -233,6 +238,7 @@ void DhtManager::setupQueryTimer()
         // Check the file for results
         pollFile();
     });
+
     m_queryTimer.start();
 }
 

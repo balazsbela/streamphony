@@ -15,6 +15,9 @@ public:
     explicit Node(const QString &id, const QHostAddress &ip, const quint16 port, QObject *parent = 0);
     ~Node() override;
 
+    QHostAddress host() const;
+    quint32 port() const;
+
 private:
     void tryToConnect();
 

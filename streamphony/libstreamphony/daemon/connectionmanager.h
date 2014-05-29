@@ -21,6 +21,10 @@ public:
     void populateNodeHash();
 
 private:
+    void saveNodes();
+    void loadNodes();
+
+private:
     QScopedPointer<XmppManager> m_xmppManager;
     QScopedPointer<DhtManager> m_dhtManager;
 

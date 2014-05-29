@@ -58,3 +58,11 @@ void Node::tryToConnect()
         m_socket.connectToHost(m_ip, m_port);
     }
 }
+
+QHostAddress Node::host() const {
+    return m_ip;
+}
+
+quint32 Node::port() const {
+    return m_port;
+}
