@@ -27,8 +27,7 @@ void XmppManager::signIn()
     m_xmppClient.configuration().setHost(XMPP_SERVER);
     m_xmppClient.configuration().setJid(SettingsManager::instance()->xmppUsername() + QStringLiteral("@") + XMPP_SERVER);
     m_xmppClient.configuration().setPassword(SettingsManager::instance()->password());
-  //  m_xmppClient.configuration().setPassword(QStringLiteral("085599"));
-
+    //m_xmppClient.configuration().setPassword(QStringLiteral("988937"));
 
     m_xmppClient.connectToServer(m_xmppClient.configuration());
 
@@ -38,7 +37,7 @@ void XmppManager::signIn()
             Q_UNUSED(roster);
             m_vCardCache.requestVCard(bareJid);
             //qDebug() << roster.bareJid() <<  roster.name();
-        }      
+        }
     });
 
     connect(&m_xmppClient.rosterManager(), &QXmppRosterManager::presenceChanged, [&](const QString& bareJid, const QString& resource) {
@@ -72,7 +71,7 @@ void XmppManager::signIn()
 
     connect(&m_xmppClient, &QXmppClient::connected, [&](){
         qDebug() << "XMPP Connected:";
-        m_vCardCache.requestVCard(m_xmppClient.configuration().jidBare());        
+        m_vCardCache.requestVCard(m_xmppClient.configuration().jidBare());
     });
 
     connect(&m_xmppClient, &QXmppClient::disconnected, [&]() {

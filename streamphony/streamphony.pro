@@ -9,9 +9,8 @@ CONFIG += ordered
 SUBDIRS +=  utils \
     3rdparty \
     libstreamphony \
-    mainapp \
     audioserver \
     audioplayer \    
-    network
+    main/main.pro
 
 
