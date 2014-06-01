@@ -2,6 +2,7 @@
 #define NODE_H
 
 #include "audioplayer/phononmediaplayer.h"
+#include "audioplayer/restclient.h"
 
 #include <QObject>
 #include <QHostAddress>
@@ -20,6 +21,13 @@ public:
     QHostAddress host() const;
     quint32 port() const;
 
+    void search(const QString &keyword);
+    bool isConnected() const;
+    QString id() const;
+
+signals:
+    void searchResults(const QStringList &results);
+
 private:
     void tryToConnect();
 
@@ -30,6 +38,7 @@ private:
     quint32 m_port = 0;
     bool tryingToConnect = false;
     PhononMediaPlayer m_player;
+    RestClient m_restClient;
 };
 
 #endif // NODE_H

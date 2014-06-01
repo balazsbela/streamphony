@@ -29,7 +29,8 @@ SOURCES += \
     xmpp/gui/rosterItem.cpp \
     xmpp/gui/rosterItemModel.cpp \
     xmpp/gui/rosterItemSortFilterProxyModel.cpp \
-    xmpp/gui/xmppimageprovider.cpp
+    xmpp/gui/xmppimageprovider.cpp \
+    audioplayer/restclient.cpp
 
 HEADERS += \
     dht/dhtmanager.h \
@@ -52,7 +53,8 @@ HEADERS += \
     xmpp/gui/rosterItem.h \
     xmpp/gui/rosterItemModel.h \
     xmpp/gui/rosterItemSortFilterProxyModel.h \
-    xmpp/gui/xmppimageprovider.h
+    xmpp/gui/xmppimageprovider.h \
+    audioplayer/restclient.h
 
 #unix {
 #    target.path = /usr/lib

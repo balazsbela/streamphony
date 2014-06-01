@@ -21,6 +21,11 @@ public:
 
     void populateNodeHash();
 
+    Q_INVOKABLE void searchNodes(const QString &keyword);
+
+signals:
+    void searchResults(const QStringList &result, const QString &bareJid);
+
 private:
     void saveNodes();
     void loadNodes();

@@ -117,3 +117,15 @@ void ConnectionManager::loadNodes() {
 
     cacheFile.close();
 }
+
+void ConnectionManager::searchNodes(const QString &keyword)
+{
+    for (const QSharedPointer<Node> &node : m_nodeHash.values()) {
+        if (node && node->isConnected()) {
+            node->search(keyword);
+            connect(node.data(), &Node::searchResults, [&](const QStringList &results) {
+               emit searchResults(results, node->id());
+            });
+        }
+    }
+}

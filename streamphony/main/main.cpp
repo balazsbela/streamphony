@@ -73,12 +73,14 @@ int main(int argc, char *argv[])
 
     XmppImageProvider *imageProvider = new XmppImageProvider(&xmppManager);
 
-    qmlRegisterUncreatableType<XmppManager>("streamphony", 1, 0, "XmppManager", QString("XmppManager not creatable from QML"));
+    qmlRegisterUncreatableType<XmppManager>("Streamphony", 1, 0, "XmppManager", QString("XmppManager not creatable from QML"));
+    qmlRegisterUncreatableType<ConnectionManager>("Streamphony", 1, 0, "ConnectionManager", QString("ConnectionManager not creatable from QML"));
 
     QQmlApplicationEngine engine;
     engine.addImageProvider(QStringLiteral("avatars"), imageProvider);
     engine.rootContext()->setContextProperty(QStringLiteral("_rosterModel"), xmppManager.model());
     engine.rootContext()->setContextProperty(QStringLiteral("_xmppManager"), &xmppManager);
+    engine.rootContext()->setContextProperty(QStringLiteral("_connectionManager"), &connectionManager);
     engine.load(QUrl(QStringLiteral("qrc:///gui/Main.qml")));
 
     return app.exec();

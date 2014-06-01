@@ -20,7 +20,7 @@ Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObjec
 
     connect(&m_socket, &QTcpSocket::connected, [&]() {
         tryingToConnect = false;
-        debugNode() << "Node connected:" << m_id << m_ip;                
+        debugNode() << "Node connected:" << m_id << m_ip;
         const QString url = QStringLiteral("http://") + m_ip.toString() + QStringLiteral(":") + QString::number(m_port) + "/1.mp3";
         debugNode() << url;
         m_player.play(url);
@@ -48,6 +48,8 @@ Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObjec
 
     m_port = MIN_PORT;
     tryToConnect();
+
+    connect(&m_restClient, &RestClient::searchResults, this, &Node::searchResults);
 }
 
 Node::~Node()
@@ -70,3 +72,19 @@ QHostAddress Node::host() const {
 quint32 Node::port() const {
     return m_port;
 }
+
+void Node::search(const QString &keyword)
+{
+    m_restClient.search(m_ip, m_port, keyword);
+}
+
+bool Node::isConnected() const
+{
+    return m_socket.state() == QTcpSocket::ConnectedState;
+}
+
+QString Node::id() const
+{
+    return m_id;
+}
+

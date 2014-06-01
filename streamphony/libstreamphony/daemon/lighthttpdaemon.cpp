@@ -13,7 +13,7 @@ const int MAX_PENDING_CONNECTIONS = 300; // This is sparta!
 
 LightHttpDaemon::LightHttpDaemon(quint32 preferredPort, quint32 minPort, quint32 maxPort, QObject *parent) :
     QTcpServer(parent)
-{           
+{
     quint32 port = minPort;
 
     if (!listen(QHostAddress::Any, preferredPort)) {
@@ -104,18 +104,42 @@ void LightHttpDaemon::handleClient()
             const QString &path = tokens[1];
             QByteArray content;
 
+            // File access
             const QStringList &filePaths = m_contentResolver->matches(path);
 
-            if (!filePaths.isEmpty()) {
-                content = m_contentResolver->resolve(filePaths.first());
+            if (tokens[1] == QStringLiteral("search?")) {
+                quint64 contentLength = 0;
+                for (const QString &path : filePaths) {
+                    const QStringList &parts = path.split("/");
+                    QStringList result;
+                    if (!parts.isEmpty()) {
+                        result.append(parts.last());
+                        contentLength += parts.last().size();
+                    }
+
+                    os << OK_HEADER;
+                    os << CONTENT_LENGTH_HEADER.arg(contentLength);
+
+                    for (const QString &part : result) {
+                        os << part << endl;
+                    }
+
+                    os.flush();
+                }
+
+            } else {
+                if (!filePaths.isEmpty()) {
+                    content = m_contentResolver->resolve(filePaths.first());
+                }
+
+                os << OK_HEADER;
+                os << CONTENT_LENGTH_HEADER.arg(content.size());
+
+                os.flush();
+
+                socket->write(content);
             }
 
-            os << OK_HEADER;
-            os << CONTENT_LENGTH_HEADER.arg(content.size());
-
-            os.flush();
-
-            socket->write(content);
             socket->close();
         }
     }
