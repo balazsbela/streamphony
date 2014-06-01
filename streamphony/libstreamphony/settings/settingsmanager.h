@@ -12,6 +12,7 @@ class SettingsManager : public QObject
     Q_PROPERTY(QString password READ password WRITE setPassword NOTIFY passwordChanged)
     Q_PROPERTY(QString xmppUsername READ xmppUsername WRITE setXmppUsername NOTIFY xmppUsernameChanged)
     Q_PROPERTY(quint32 httpPort READ httpPort WRITE setHttpPort NOTIFY httpPortChanged)
+    Q_PROPERTY(QStringList sharedPaths READ sharedPaths WRITE setSharedPaths NOTIFY sharedPathsChanged)
 
 public:
     explicit SettingsManager(QObject *parent = 0);
@@ -31,11 +32,15 @@ public:
     QString xmppUsername() const;
     void setXmppUsername(const QString &value);
 
+    QStringList sharedPaths() const;
+    void setSharedPaths(const QStringList &sharedPaths);
+
 signals:
     void emailChanged(const QString &newValue);
     void passwordChanged(const QString &newValue);
     void xmppUsernameChanged(const QString &newValue);
     void httpPortChanged(const quint32 newValue);
+    void sharedPathsChanged(const QStringList &sharedPaths);
 
 private:
     static SettingsManager *s_instance;

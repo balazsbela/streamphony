@@ -12,6 +12,7 @@ static const QString EMAIL_KEY = "email";
 static const QString PASSWORD_KEY = "password";
 static const QString XMPP_USERNAME_KEY = "xmppUsername";
 static const QString HTTP_PORT_KEY = "httpPort";
+static const QString SHARED_PATHS_KEY = "sharedPaths";
 
 //Debug
 
@@ -96,5 +97,18 @@ void SettingsManager::setHttpPort(quint32 port)
     if (port != httpPort()) {
         m_settings->setValue(HTTP_PORT_KEY, QVariant(port));
         emit httpPortChanged(port);
+    }
+}
+
+QStringList SettingsManager::sharedPaths() const
+{
+    return m_settings->value(SHARED_PATHS_KEY, {}).toStringList();
+}
+
+void SettingsManager::setSharedPaths(const QStringList &newValue)
+{
+    if (newValue != sharedPaths()) {
+        m_settings->setValue(SHARED_PATHS_KEY, newValue);
+        emit sharedPathsChanged(newValue);
     }
 }

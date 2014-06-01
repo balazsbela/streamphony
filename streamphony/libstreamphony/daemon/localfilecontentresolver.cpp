@@ -1,4 +1,5 @@
 #include "localfilecontentresolver.h"
+#include "settings/settingsmanager.h"
 
 #include <QFile>
 #include <QDir>
@@ -10,6 +11,11 @@ const QStringList FILE_TYPES = {QStringLiteral("*.mp3"),
 LocalFileContentResolver::LocalFileContentResolver(QObject *parent) :
     ContentResolver(parent)
 {
+    for (const QString &folder : SettingsManager::instance()->sharedPaths()) {
+        const QDir dir(folder);
+        if (dir.exists())
+            m_sharedFolders.append(dir);
+    }
 }
 
 LocalFileContentResolver::~LocalFileContentResolver()
@@ -37,25 +43,44 @@ QByteArray LocalFileContentResolver::resolve(const QString &path, quint64 offset
     return results;
 }
 
-QStringList LocalFileContentResolver::matches(const QString &keyword)
+void LocalFileContentResolver::find(const QString &keyword, const QDir &rootFolder, QStringList *results)
 {
+    Q_ASSERT(results);
+
     QStringList nameFilters = FILE_TYPES;
 
+    nameFilters << keyword;
+
+    QStringList entries = rootFolder.entryList(nameFilters,
+                                             QDir::Files | QDir::AllDirs |
+                                             QDir::NoDotAndDotDot | QDir::Readable);
+
+    for (const QString &name : entries) {
+        const QFileInfo &info(rootFolder.absolutePath()+ QStringLiteral("/") + name);
+        qDebug() << name;
+
+        if (info.isDir()) {
+            find(keyword, QDir(name), results);
+        } else {
+            if (info.isFile())
+                results->append(name);
+        }
+    }
+}
+
+QStringList LocalFileContentResolver::matches(const QString &keyword)
+{
     QString searchKey = keyword;
     searchKey.truncate(searchKey.lastIndexOf('.'));
     searchKey += QChar('*');
 
-    nameFilters << searchKey;
+    QStringList results;
+    for (const QDir &sharedDir : m_sharedFolders) {
+        find(searchKey, sharedDir, &results);
+    }
 
-    qDebug() << nameFilters;
-
-    QStringList files = QDir::current().entryList(nameFilters,
-                                                  QDir::Files | QDir::AllDirs |
-                                                  QDir::NoDotAndDotDot | QDir::Readable);
-
-    qDebug() << files;
-
-    return files;
+    return results;
 }
+
 
 

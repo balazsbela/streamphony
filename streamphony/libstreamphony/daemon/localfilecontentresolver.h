@@ -5,6 +5,8 @@
 
 #include <QByteArray>
 #include <QStringList>
+#include <QList>
+#include <QDir>
 
 class LocalFileContentResolver : public ContentResolver
 {
@@ -15,6 +17,11 @@ public:
 
     QByteArray resolve(const QString &path, quint64 offset = 0) override;
     QStringList matches(const QString &keyword) override;
+    void find (const QString &keyword, const QDir &rootFolder, QStringList *results);
+
+private:
+    QList<QDir> m_sharedFolders;
+
 };
 
 #endif // LOCALFILECONTENTRESOLVER_H
