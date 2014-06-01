@@ -30,6 +30,8 @@
 #include <QDesktopServices>
 #endif
 
+#include <QDebug>
+
 int comparisonWeightsPresenceStatusType(QXmppPresence::AvailableStatusType statusType)
 {
     switch(statusType)

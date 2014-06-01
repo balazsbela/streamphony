@@ -7,6 +7,7 @@
 #include <QObject>
 #include <QSharedPointer>
 #include <QScopedPointer>
+#include <QPointer>
 
 class Node;
 class DhtManager;
@@ -25,8 +26,8 @@ private:
     void loadNodes();
 
 private:
-    QScopedPointer<XmppManager> m_xmppManager;
-    QScopedPointer<DhtManager> m_dhtManager;
+    QPointer<XmppManager> m_xmppManager;
+    QPointer<DhtManager> m_dhtManager;
 
     //! key is the bareJid
     QHash<QString, QSharedPointer<Node>> m_nodeHash;

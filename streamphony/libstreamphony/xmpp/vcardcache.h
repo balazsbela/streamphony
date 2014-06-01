@@ -48,6 +48,7 @@ public:
     void loadFromFile();
 
     QByteArray getPhotoHash(const QString& bareJid) const;
+    int vCardCount() const;
 
 signals:
     void vCardReadyToUse(const QString& bareJid);

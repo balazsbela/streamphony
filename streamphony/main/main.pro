@@ -21,7 +21,10 @@ addModule(libstreamphony, libstreamphony.a)
 include(../libstreamphony/modules.pri);
 
 OTHER_FILES += bdboot.txt \
-    gui/Main.qml
+    gui/Main.qml \
+    gui/PlaybackScreen.qml \
+    gui/ProgressBar.qml \
+    gui/FriendList.qml
 
 peerlist.path = $$OUT_PWD
 peerlist.files = $$PWD/bdboot.txt

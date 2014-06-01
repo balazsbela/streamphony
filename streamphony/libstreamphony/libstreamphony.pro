@@ -7,7 +7,7 @@
 include(../global.pri);
 include(../utils/utils.pri);
 
-QT += network xml gui phonon4qt5
+QT += network xml gui phonon4qt5 quick
 
 TARGET = streamphony
 TEMPLATE = lib
@@ -25,7 +25,11 @@ SOURCES += \
     daemon/connectionmanager.cpp \
     daemon/node.cpp \
     audioplayer/mediastream.cpp \
-    audioplayer/phononmediaplayer.cpp
+    audioplayer/phononmediaplayer.cpp \
+    xmpp/gui/rosterItem.cpp \
+    xmpp/gui/rosterItemModel.cpp \
+    xmpp/gui/rosterItemSortFilterProxyModel.cpp \
+    xmpp/gui/xmppimageprovider.cpp
 
 HEADERS += \
     dht/dhtmanager.h \
@@ -44,7 +48,11 @@ HEADERS += \
     daemon/nodestatus.h \
     dht/dhtconversions.h \
     audioplayer/mediastream.h \
-    audioplayer/phononmediaplayer.h
+    audioplayer/phononmediaplayer.h \
+    xmpp/gui/rosterItem.h \
+    xmpp/gui/rosterItemModel.h \
+    xmpp/gui/rosterItemSortFilterProxyModel.h \
+    xmpp/gui/xmppimageprovider.h
 
 #unix {
 #    target.path = /usr/lib

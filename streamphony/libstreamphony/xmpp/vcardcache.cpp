@@ -36,6 +36,7 @@
 vCardCache::vCardCache(QXmppClient* client) : QObject(client),
                 m_client(client)
 {
+    loadFromFile();
 }
 
 void vCardCache::vCardReceived(const QXmppVCardIq& vcard)
@@ -128,10 +129,12 @@ void vCardCache::loadFromFile()
 //TODO: this should return scaled image
 QImage vCardCache::getAvatar(const QString& bareJid) const
 {
-    if(m_mapBareJidVcard.contains(bareJid))
+    if (m_mapBareJidVcard.contains(bareJid))
         return getImageFromByteArray(m_mapBareJidVcard[bareJid].photo());
-    else
+    else {
+        qDebug() << "Avatar not available for" << bareJid;
         return QImage();
+    }
 }
 
 QByteArray vCardCache::getPhotoHash(const QString& bareJid) const
@@ -144,4 +147,9 @@ QByteArray vCardCache::getPhotoHash(const QString& bareJid) const
     else
         return QCryptographicHash::hash(m_mapBareJidVcard[bareJid].photo(),
                                     QCryptographicHash::Sha1);
+}
+
+int vCardCache::vCardCount() const
+{
+    return m_mapBareJidVcard.keys().size();
 }

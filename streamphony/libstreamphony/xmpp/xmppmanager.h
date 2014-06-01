@@ -6,10 +6,12 @@
 #include "QXmppRosterManager.h"
 #include "QXmppVCardIq.h"
 #include "vcardcache.h"
+#include "gui/rosterItem.h"
+#include "gui/rosterItemSortFilterProxyModel.h"
+#include "gui/rosterItemModel.h"
 
 #include <QObject>
 #include <QSharedPointer>
-
 
 class XmppManager : public QObject
 {
@@ -24,15 +26,26 @@ public:
     QByteArray userUniqueId(const QString &bareJid);
     QString ownJid();
     QString fullName(const QString &bareJid);
+    RosterItemSortFilterProxyModel* model();
+    QImage avatar(const QString &bareJid) const;
+    bool isSigninCompleted() const;
 
 signals:
     void signInCompleted();
+    void avatarChanged(const QString &bareJid);
+
+private:
+    void updateVCard(const QString &bareJid);
 
 private:
     QXmppClient m_xmppClient;
     QHash<QString, QXmppPresence> m_presenceHash;
     vCardCache m_vCardCache;
     bool m_signInCompleted = false;
+
+    // GUI Stuff
+    RosterItemModel m_rosterItemModel;
+    RosterItemSortFilterProxyModel* m_rosterItemSortFilterModel = new RosterItemSortFilterProxyModel();
 };
 
 #endif // XMPPMANAGER_H

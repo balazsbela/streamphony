@@ -1,5 +1,17 @@
 <RCC>
     <qresource prefix="/">
         <file>gui/Main.qml</file>
+        <file>gui/icons/ffw.png</file>
+        <file>gui/icons/pause.png</file>
+        <file>gui/icons/play.png</file>
+        <file>gui/icons/rew.png</file>
+        <file>gui/icons/stop.png</file>
+        <file>gui/icons/volume.png</file>
+        <file>gui/ButtonPanel.qml</file>
+        <file>gui/PlaybackScreen.qml</file>
+        <file>gui/ProgressBar.qml</file>
+        <file>gui/FriendList.qml</file>
+        <file>gui/icons/profile.png</file>
+        <file>gui/ScrollBar.qml</file>
     </qresource>
 </RCC>

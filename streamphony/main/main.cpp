@@ -6,6 +6,7 @@
 #include "singleshottimer.h"
 #include "daemon/portrange.h"
 #include "daemon/connectionmanager.h"
+#include "xmpp/gui/xmppimageprovider.h"
 
 #include <QApplication>
 #include <QCryptographicHash>
@@ -14,15 +15,14 @@
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QtQml>
 
 static const int MINIMAL_NUMBER_OF_NODES = 2;
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-
-    QQmlApplicationEngine engine;
-    engine.load(QUrl(QStringLiteral("qrc:///gui/Main.qml")));
 
     SettingsManager settingsManager(&app);
 
@@ -65,12 +65,21 @@ int main(int argc, char *argv[])
     QObject::connect(&dhtReadyTimer, &QTimer::timeout, [&]() {
         if (dht.nodeCount() >= MINIMAL_NUMBER_OF_NODES) {
             connectionManager.populateNodeHash();
-
             // Launch new queries every 30 seconds because online contacts have probably changed.
             dhtReadyTimer.setInterval(30000);
         }
     });
     dhtReadyTimer.start();
+
+    XmppImageProvider *imageProvider = new XmppImageProvider(&xmppManager);
+
+    qmlRegisterUncreatableType<XmppManager>("streamphony", 1, 0, "XmppManager", QString("XmppManager not creatable from QML"));
+
+    QQmlApplicationEngine engine;
+    engine.addImageProvider(QStringLiteral("avatars"), imageProvider);
+    engine.rootContext()->setContextProperty(QStringLiteral("_rosterModel"), xmppManager.model());
+    engine.rootContext()->setContextProperty(QStringLiteral("_xmppManager"), &xmppManager);
+    engine.load(QUrl(QStringLiteral("qrc:///gui/Main.qml")));
 
     return app.exec();
 }

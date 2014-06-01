@@ -16,6 +16,7 @@ XmppManager::XmppManager(QObject *parent) :
     QObject(parent),
     m_vCardCache(&m_xmppClient)
 {
+    m_rosterItemSortFilterModel->setSourceModel(&m_rosterItemModel);
 }
 
 XmppManager::~XmppManager()
@@ -24,10 +25,12 @@ XmppManager::~XmppManager()
 
 void XmppManager::signIn()
 {
+    m_rosterItemModel.clear();
+
     m_xmppClient.configuration().setHost(XMPP_SERVER);
     m_xmppClient.configuration().setJid(SettingsManager::instance()->xmppUsername() + QStringLiteral("@") + XMPP_SERVER);
     m_xmppClient.configuration().setPassword(SettingsManager::instance()->password());
-    //m_xmppClient.configuration().setPassword(QStringLiteral("988937"));
+    //m_xmppClient.configuration().setPassword(QStringLiteral("935630"));
 
     m_xmppClient.connectToServer(m_xmppClient.configuration());
 
@@ -44,10 +47,14 @@ void XmppManager::signIn()
         QMap<QString, QXmppPresence> presences = m_xmppClient.rosterManager().getAllPresencesForBareJid(bareJid);
         QXmppPresence& presence = presences[resource];
 
+        m_rosterItemModel.updatePresence(bareJid, presences);
+
         const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
         m_presenceHash[roster.bareJid()] = presence;
         if (presence.availableStatusType() == QXmppPresence::Online) {
-          //  qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText();
+            //  qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText();
+            if(!m_rosterItemModel.getRosterItemFromBareJid(bareJid))
+                m_rosterItemModel.updateRosterEntry(bareJid, m_xmppClient.rosterManager().getRosterEntry(bareJid));
         }
 
         qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText() << presence.type() << presence.availableStatusType();
@@ -65,6 +72,10 @@ void XmppManager::signIn()
 
     connect(&m_xmppClient.vCardManager(), &QXmppVCardManager::vCardReceived, &m_vCardCache, &vCardCache::vCardReceived);
 
+    connect(&m_vCardCache,&vCardCache::vCardReadyToUse, [=](const QString &bareJid) {
+        updateVCard(bareJid);
+    });
+
     connect(&m_xmppClient, &QXmppClient::error, [](QXmppClient::Error error) {
         qDebug() << "XMPP Error:" << error;
     });
@@ -77,6 +88,18 @@ void XmppManager::signIn()
     connect(&m_xmppClient, &QXmppClient::disconnected, [&]() {
         qDebug() << "XPP Disconnected";
         m_signInCompleted = false;
+    });
+
+    connect(&m_xmppClient.rosterManager(), &QXmppRosterManager::itemChanged, [&] (const QString &bareJid) {
+
+        const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
+
+        if (m_xmppClient.rosterManager().getPresence(bareJid, QStringLiteral("")).type() == QXmppPresence::Available) {
+            m_rosterItemModel.updateRosterEntry(bareJid, roster);
+        }
+
+        if(m_vCardCache.isVCardAvailable(bareJid))
+            updateVCard(bareJid);
     });
 }
 
@@ -128,3 +151,42 @@ QString XmppManager::fullName(const QString &bareJid)
     return m_vCardCache.getVCard(bareJid).fullName();
 }
 
+void XmppManager::updateVCard(const QString &bareJid)
+{
+    // determine full name
+    const QXmppVCardIq vCard = m_vCardCache.getVCard(bareJid);
+    QString fullName = vCard.fullName();
+    if (fullName.isEmpty())
+        fullName = bareJid;
+
+    // determine avatar
+    QImage avatar = m_vCardCache.getAvatar(bareJid);
+
+    if (avatar.isNull())
+        avatar = QImage();
+
+    if (bareJid != m_xmppClient.configuration().jidBare()) {
+        if (m_xmppClient.rosterManager().getPresence(bareJid, QStringLiteral("")).type() == QXmppPresence::Available) {
+            // update roster information
+            m_rosterItemModel.updateAvatar(bareJid, avatar);
+            m_rosterItemModel.updateName(bareJid, fullName);
+
+            emit avatarChanged(bareJid);
+        }
+    }
+}
+
+RosterItemSortFilterProxyModel* XmppManager::model()
+{
+    return m_rosterItemSortFilterModel;
+}
+
+QImage XmppManager::avatar(const QString &bareJid) const
+{
+   return m_vCardCache.getAvatar(bareJid);
+}
+
+bool XmppManager::isSigninCompleted() const
+{
+    return m_signInCompleted;
+}

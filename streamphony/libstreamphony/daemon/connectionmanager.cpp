@@ -22,13 +22,13 @@ ConnectionManager::ConnectionManager(DhtManager *dhtManager, XmppManager *xmppMa
     Q_ASSERT(xmppManager);
     Q_ASSERT(dhtManager);
 
-    m_xmppManager.reset(xmppManager);
-    m_dhtManager.reset(dhtManager);
+    m_xmppManager = xmppManager;
+    m_dhtManager = dhtManager;
     loadNodes();
 }
 
 ConnectionManager::~ConnectionManager()
-{    
+{
 }
 
 void ConnectionManager::populateNodeHash()

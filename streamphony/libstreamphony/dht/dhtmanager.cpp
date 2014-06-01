@@ -25,7 +25,7 @@ static const int MAX_QUERY_PER_MINUTE = 5;
 using namespace DhtConversions;
 
 DhtManager::DhtManager(QObject *parent) : QObject(parent)
-{    
+{
 }
 
 void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, const QString &bootstrapFile)
@@ -79,7 +79,7 @@ void DhtManager::start(bdNodeId *ownId, uint16_t port, const QString &appId, con
 
 DhtManager::~DhtManager()
 {
-    m_udpBitDht->stopDht();
+    //m_udpBitDht->stopDht();
 }
 
 void DhtManager::enable(bool on)
@@ -137,7 +137,7 @@ bool DhtManager::dropNode(bdNodeId *peerId)
 }
 
 void DhtManager::foundPeer(const bdId *id, uint32_t status)
-{      
+{
 
     if (status != BITDHT_QUERY_FOUND_CLOSEST || status != BITDHT_QUERY_SUCCESS) {
 
@@ -160,7 +160,7 @@ void DhtManager::foundPeer(const bdId *id, uint32_t status)
 }
 
 bool DhtManager::findNodeByHash(const QByteArray &hash)
-{           
+{
     m_pendingQueries.insert(hash);
     m_pendingForQuery.enqueue(hash);
     return true;
