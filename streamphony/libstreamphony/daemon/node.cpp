@@ -20,7 +20,6 @@ Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObjec
         debugNode() << "Node connected:" << m_id << m_ip;
         const QString url = QStringLiteral("http://") + m_ip.toString() + QStringLiteral(":") + QString::number(m_port) + "/1.mp3";
         debugNode() << url;
-        m_player.play(url);
     });
 
     connect(&m_socket, &QTcpSocket::disconnected, [&]() {
@@ -88,3 +87,12 @@ QString Node::id() const
     return m_id;
 }
 
+void Node::play(const QString &file)
+{
+    m_player.play(QStringLiteral("http://") +
+                  m_ip.toString() +
+                  QStringLiteral(":") +
+                  QString::number(m_port) +
+                  QStringLiteral("/") +
+                  file);
+}

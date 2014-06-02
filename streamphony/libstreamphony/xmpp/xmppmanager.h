@@ -25,7 +25,7 @@ public:
     const QXmppRosterIq::Item roster(const QString &bareJid);
     QByteArray userUniqueId(const QString &bareJid);
     QString ownJid();
-    QString fullName(const QString &bareJid);
+    Q_INVOKABLE QString fullName(const QString &bareJid);
     RosterItemSortFilterProxyModel* model();
     QImage avatar(const QString &bareJid) const;
     bool isSigninCompleted() const;

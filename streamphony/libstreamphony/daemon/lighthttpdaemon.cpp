@@ -133,7 +133,9 @@ void LightHttpDaemon::handleClient()
 
             } else {
                 // File access
-                const QStringList &filePaths = m_contentResolver->matches(path);
+                QString pathKey = path;
+                pathKey.remove(QStringLiteral("/"));
+                const QStringList &filePaths = m_contentResolver->matches(pathKey);
 
                 if (!filePaths.isEmpty()) {
                     content = m_contentResolver->resolve(filePaths.first());

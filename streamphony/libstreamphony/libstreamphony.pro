@@ -32,7 +32,8 @@ SOURCES += \
     xmpp/gui/xmppimageprovider.cpp \
     audioplayer/restclient.cpp \
     daemon/gui/searchresultmodel.cpp \
-    daemon/gui/searchresultitem.cpp
+    daemon/gui/searchresultitem.cpp \
+    daemon/gui/listmodel.cpp
 
 HEADERS += \
     dht/dhtmanager.h \
@@ -58,7 +59,8 @@ HEADERS += \
     xmpp/gui/xmppimageprovider.h \
     audioplayer/restclient.h \
     daemon/gui/searchresultmodel.h \
-    daemon/gui/searchresultitem.h
+    daemon/gui/searchresultitem.h \
+    daemon/gui/listmodel.h
 
 #unix {
 #    target.path = /usr/lib

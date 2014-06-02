@@ -29,7 +29,7 @@ ConnectionManager::ConnectionManager(DhtManager *dhtManager, XmppManager *xmppMa
 
     connect(this, &ConnectionManager::searchResults, [&](const QStringList &results, const QString &bareJid) {
         for (const QString &result : results) {
-            m_model->addItems(SearchResultItem(result, bareJid));
+            m_model->appendRow(new SearchResultItem(result, bareJid, this));
         }
     });
 }
@@ -131,6 +131,8 @@ void ConnectionManager::loadNodes() {
 
 void ConnectionManager::searchNodes(const QString &keyword)
 {
+    m_model->clear();
+
     for (const QSharedPointer<Node> &node : m_nodeHash.values()) {
         if (node && node->isConnected()) {
             node->search(keyword);
@@ -141,7 +143,14 @@ void ConnectionManager::searchNodes(const QString &keyword)
     }
 }
 
-SearchResultModel* ConnectionManager:: model()
+ListModel* ConnectionManager::model()
 {
     return m_model;
+}
+
+void ConnectionManager::play(const QString &fileName, const QString &bareJid)
+{
+    auto node = m_nodeHash[bareJid];
+    if (node)
+        node->play(fileName);
 }

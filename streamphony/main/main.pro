@@ -25,7 +25,8 @@ OTHER_FILES += bdboot.txt \
     gui/PlaybackScreen.qml \
     gui/ProgressBar.qml \
     gui/FriendList.qml \
-    gui/Results.qml
+    gui/Results.qml \
+    gui/ScrollBar.qml
 
 peerlist.path = $$OUT_PWD
 peerlist.files = $$PWD/bdboot.txt

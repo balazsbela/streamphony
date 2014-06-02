@@ -25,6 +25,8 @@ public:
     bool isConnected() const;
     QString id() const;
 
+    void play(const QString &file);
+
 signals:
     void searchResults(const QStringList &results);
 

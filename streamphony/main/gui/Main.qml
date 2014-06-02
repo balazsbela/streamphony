@@ -9,7 +9,7 @@ ApplicationWindow {
     title: "Streamphony"
 
     color: "#444444"
-    width: 800
+    width: 850
     height: 600
     minimumHeight: 600
     minimumWidth: 800
@@ -44,7 +44,7 @@ ApplicationWindow {
     }
 
     Label {
-        id: label1
+        id: searchLabel
         x: 420
         y: 0
         color: "#dddddd"
@@ -54,6 +54,8 @@ ApplicationWindow {
 
     Results {
         id: results
+        color: "#333333"
+        border.width: 1
     }
 }
 

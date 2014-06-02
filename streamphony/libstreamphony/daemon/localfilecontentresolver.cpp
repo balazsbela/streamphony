@@ -74,6 +74,8 @@ QStringList LocalFileContentResolver::matches(const QString &keyword)
     if (searchKey.contains("."))
         searchKey.truncate(searchKey.lastIndexOf('.'));
     searchKey += QChar('*');
+    searchKey.replace(QStringLiteral("%20"), QStringLiteral(" "));
+    searchKey.replace(QRegExp(QStringLiteral("%(.*)")), QStringLiteral("*"));
 
     QStringList results;
     for (const QDir &sharedDir : m_sharedFolders) {

@@ -23,7 +23,9 @@ public:
     void populateNodeHash();
 
     Q_INVOKABLE void searchNodes(const QString &keyword);
-    SearchResultModel* model();
+    Q_INVOKABLE void play(const QString &fileName, const QString &bareJid);
+
+    ListModel* model();
 
 signals:
     void searchResults(const QStringList &result, const QString &bareJid);
@@ -40,7 +42,7 @@ private:
     QHash<QString, QSharedPointer<Node>> m_nodeHash;
     QHash<QString, QSharedPointer<NodeStatus>> nodeIdMap;
 
-    SearchResultModel *m_model = new SearchResultModel();
+    ListModel *m_model = new ListModel(new SearchResultItem());
 };
 
 #endif // CONNECTIONMANAGER_H
