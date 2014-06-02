@@ -53,8 +53,7 @@ void XmppManager::signIn()
         m_presenceHash[roster.bareJid()] = presence;
         if (presence.availableStatusType() == QXmppPresence::Online) {
             //  qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText();
-            if(!m_rosterItemModel.getRosterItemFromBareJid(bareJid))
-                m_rosterItemModel.updateRosterEntry(bareJid, m_xmppClient.rosterManager().getRosterEntry(bareJid));
+            m_rosterItemModel.updateRosterEntry(bareJid, m_xmppClient.rosterManager().getRosterEntry(bareJid));
         }
 
         qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText() << presence.type() << presence.availableStatusType();

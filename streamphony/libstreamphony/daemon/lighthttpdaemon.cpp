@@ -8,6 +8,8 @@
 const QString OK_HEADER = QStringLiteral("HTTP/1.1 200 OK\r\n");
 const QString BAD_REQUEST = QStringLiteral("HTTP/1.1 400 Bad Request\r\n\r\n");
 const QString CONTENT_LENGTH_HEADER = QStringLiteral("Content-Length: %1 \r\n\r\n");
+const QString SEARCH_PATTERN = QStringLiteral("/search?keyword=");
+
 
 const int MAX_PENDING_CONNECTIONS = 300; // This is sparta!
 
@@ -104,30 +106,35 @@ void LightHttpDaemon::handleClient()
             const QString &path = tokens[1];
             QByteArray content;
 
-            // File access
-            const QStringList &filePaths = m_contentResolver->matches(path);
+            if (tokens[1].startsWith(SEARCH_PATTERN)) {
+                QString keyword = tokens[1];
+                keyword = keyword.replace(SEARCH_PATTERN, QStringLiteral(""));
+                const QStringList &filePaths = m_contentResolver->matches(keyword);
 
-            if (tokens[1] == QStringLiteral("search?")) {
                 quint64 contentLength = 0;
+                QStringList result;
+
                 for (const QString &path : filePaths) {
                     const QStringList &parts = path.split("/");
-                    QStringList result;
                     if (!parts.isEmpty()) {
                         result.append(parts.last());
-                        contentLength += parts.last().size();
+                        contentLength += parts.last().size() + 1;
                     }
-
-                    os << OK_HEADER;
-                    os << CONTENT_LENGTH_HEADER.arg(contentLength);
-
-                    for (const QString &part : result) {
-                        os << part << endl;
-                    }
-
-                    os.flush();
                 }
 
+                os << OK_HEADER;
+                os << CONTENT_LENGTH_HEADER.arg(contentLength);
+
+                for (const QString &part : result) {
+                    os << part << endl;
+                }
+
+                os.flush();
+
             } else {
+                // File access
+                const QStringList &filePaths = m_contentResolver->matches(path);
+
                 if (!filePaths.isEmpty()) {
                     content = m_contentResolver->resolve(filePaths.first());
                 }

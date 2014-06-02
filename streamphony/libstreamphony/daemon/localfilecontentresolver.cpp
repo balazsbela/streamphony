@@ -5,8 +5,8 @@
 #include <QDir>
 #include <QDebug>
 
-const QStringList FILE_TYPES = {QStringLiteral("*.mp3"),
-                                QStringLiteral("*.ogg")};
+const QStringList FILE_TYPES = {QStringLiteral("*%1.mp3"),
+                                QStringLiteral("*%1.ogg")};
 
 LocalFileContentResolver::LocalFileContentResolver(QObject *parent) :
     ContentResolver(parent)
@@ -47,23 +47,23 @@ void LocalFileContentResolver::find(const QString &keyword, const QDir &rootFold
 {
     Q_ASSERT(results);
 
-    QStringList nameFilters = FILE_TYPES;
-
-    nameFilters << keyword;
+    QStringList nameFilters;
+    nameFilters << FILE_TYPES[0].arg(keyword);
+    nameFilters << FILE_TYPES[1].arg(keyword);
 
     QStringList entries = rootFolder.entryList(nameFilters,
-                                             QDir::Files | QDir::AllDirs |
-                                             QDir::NoDotAndDotDot | QDir::Readable);
+                                               QDir::Files | QDir::AllDirs |
+                                               QDir::NoDotAndDotDot | QDir::Readable, QDir::Name);
 
     for (const QString &name : entries) {
         const QFileInfo &info(rootFolder.absolutePath()+ QStringLiteral("/") + name);
-        qDebug() << name;
-
         if (info.isDir()) {
-            find(keyword, QDir(name), results);
+            find(keyword, QDir(rootFolder.absolutePath()+ QStringLiteral("/") + name), results);
         } else {
-            if (info.isFile())
-                results->append(name);
+            if (info.isFile()) {
+                qDebug() << "Found: " << name;
+                results->append(rootFolder.absolutePath()+ QStringLiteral("/") + name);
+            }
         }
     }
 }
@@ -71,14 +71,14 @@ void LocalFileContentResolver::find(const QString &keyword, const QDir &rootFold
 QStringList LocalFileContentResolver::matches(const QString &keyword)
 {
     QString searchKey = keyword;
-    searchKey.truncate(searchKey.lastIndexOf('.'));
+    if (searchKey.contains("."))
+        searchKey.truncate(searchKey.lastIndexOf('.'));
     searchKey += QChar('*');
 
     QStringList results;
     for (const QDir &sharedDir : m_sharedFolders) {
         find(searchKey, sharedDir, &results);
     }
-
     return results;
 }
 

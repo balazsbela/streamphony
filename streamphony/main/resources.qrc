@@ -13,5 +13,6 @@
         <file>gui/FriendList.qml</file>
         <file>gui/icons/profile.png</file>
         <file>gui/ScrollBar.qml</file>
+        <file>gui/Results.qml</file>
     </qresource>
 </RCC>

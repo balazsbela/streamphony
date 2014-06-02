@@ -27,7 +27,7 @@ ApplicationWindow {
     }
 
     TextField {
-        id: textField1
+        id: searchField
         x: 345
         y: 40
         width: 218
@@ -36,10 +36,11 @@ ApplicationWindow {
     }
 
     Button {
-        id: button1
+        id: searchButton
         x: 569
         y: 40
         text: qsTr("Search")
+        onClicked: _connectionManager.searchNodes(searchField.text)
     }
 
     Label {
@@ -51,53 +52,8 @@ ApplicationWindow {
         font.pointSize: 16
     }
 
-    ListView {
-        id: listView1
-        x: 345
-        y: 102
-        width: 304
-        height: 286
-        model: ListModel {
-            ListElement {
-                name: "Grey"
-                colorCode: "grey"
-            }
-
-            ListElement {
-                name: "Red"
-                colorCode: "red"
-            }
-
-            ListElement {
-                name: "Blue"
-                colorCode: "blue"
-            }
-
-            ListElement {
-                name: "Green"
-                colorCode: "green"
-            }
-        }
-        delegate: Item {
-            x: 5
-            width: 80
-            height: 40
-            Row {
-                id: row1
-                Rectangle {
-                    width: 40
-                    height: 40
-                    color: colorCode
-                }
-
-                Text {
-                    text: name
-                    anchors.verticalCenter: parent.verticalCenter
-                    font.bold: true
-                }
-                spacing: 10
-            }
-        }
+    Results {
+        id: results
     }
 }
 

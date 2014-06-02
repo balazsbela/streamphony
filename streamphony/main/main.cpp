@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     engine.addImageProvider(QStringLiteral("avatars"), imageProvider);
     engine.rootContext()->setContextProperty(QStringLiteral("_rosterModel"), xmppManager.model());
+    engine.rootContext()->setContextProperty(QStringLiteral("_searchResultModel"), connectionManager.model());
     engine.rootContext()->setContextProperty(QStringLiteral("_xmppManager"), &xmppManager);
     engine.rootContext()->setContextProperty(QStringLiteral("_connectionManager"), &connectionManager);
     engine.load(QUrl(QStringLiteral("qrc:///gui/Main.qml")));

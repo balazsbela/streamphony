@@ -21,9 +21,12 @@ void RestClient::search(const QHostAddress &host, quint32 port, const QString &k
 {
     QUrl url(SEARCH_URL.arg(host.toString()).arg(port).arg(keyword));
     QNetworkReply *reply = m_networkAccessManager.get(composeRequest(url));
-    connect(reply, &QNetworkReply::isFinished, [&](){
-        const QByteArray &content = reply->readAll();
+    QSharedPointer<QNetworkReply> replyPointer(reply);
+    connect(replyPointer.data(), &QNetworkReply::finished, [=](){
 
+        const QByteArray &content = replyPointer->readAll();
+        qDebug() << "Lenght:" << content.size();
+        qDebug() << "RECEIVED SEARCH RESULTS RESPONSE:" << QString::fromUtf8(content);
         emit searchResults(QString::fromUtf8(content).split(QRegExp("[\r\n]"),QString::SkipEmptyParts));
     });
 }

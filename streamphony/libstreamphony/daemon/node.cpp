@@ -15,16 +15,12 @@ Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObjec
     m_id(id),
     m_ip(ip)
 {
-    // It's useless, since it's a bittorrent port or something similar
-    Q_UNUSED(port);
-
     connect(&m_socket, &QTcpSocket::connected, [&]() {
         tryingToConnect = false;
         debugNode() << "Node connected:" << m_id << m_ip;
         const QString url = QStringLiteral("http://") + m_ip.toString() + QStringLiteral(":") + QString::number(m_port) + "/1.mp3";
         debugNode() << url;
         m_player.play(url);
-
     });
 
     connect(&m_socket, &QTcpSocket::disconnected, [&]() {
@@ -34,6 +30,10 @@ Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObjec
 
     connect(&m_socket, utils::resolve_overload<QAbstractSocket::SocketError>::of(&QTcpSocket::error), [&]() {
         if (tryingToConnect) {
+            if (m_port <= MIN_PORT || m_port >= MAX_PORT) {
+                m_port = MIN_PORT;
+            }
+
             if (m_port < MAX_PORT) {
                 m_port++;
                 debugNode() << "Error on socket, retrying";
@@ -46,7 +46,7 @@ Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObjec
         }
     });
 
-    m_port = MIN_PORT;
+    m_port = port;
     tryToConnect();
 
     connect(&m_restClient, &RestClient::searchResults, this, &Node::searchResults);

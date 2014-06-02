@@ -65,7 +65,7 @@ Portfwd::init(unsigned int timeout)
        int i;
        i = UPNP_GetValidIGD(devlist, urls, data, (char*)&lanaddr, 16);
        m_lanip = std::string(lanaddr);
-       
+
        freeUPNPDevlist(devlist);
        get_status();
        return true;
@@ -82,8 +82,8 @@ Portfwd::get_status()
 
     // get external IP adress
     char ip[16];
-    if( 0 != UPNP_GetExternalIPAddress( urls->controlURL, 
-                                        data->servicetype, 
+    if( 0 != UPNP_GetExternalIPAddress( urls->controlURL,
+                                        data->servicetype,
                                         (char*)&ip ) )
     {
         m_externalip = ""; //failed

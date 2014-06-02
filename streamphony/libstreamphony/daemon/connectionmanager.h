@@ -3,6 +3,7 @@
 
 #include "xmpp/xmppmanager.h"
 #include "daemon/nodestatus.h"
+#include "daemon/gui/searchresultmodel.h"
 
 #include <QObject>
 #include <QSharedPointer>
@@ -22,6 +23,7 @@ public:
     void populateNodeHash();
 
     Q_INVOKABLE void searchNodes(const QString &keyword);
+    SearchResultModel* model();
 
 signals:
     void searchResults(const QStringList &result, const QString &bareJid);
@@ -37,6 +39,8 @@ private:
     //! key is the bareJid
     QHash<QString, QSharedPointer<Node>> m_nodeHash;
     QHash<QString, QSharedPointer<NodeStatus>> nodeIdMap;
+
+    SearchResultModel *m_model = new SearchResultModel();
 };
 
 #endif // CONNECTIONMANAGER_H

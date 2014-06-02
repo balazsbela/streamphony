@@ -1,6 +1,7 @@
 #include "connectionmanager.h"
 #include "dht/dhtmanager.h"
 #include "daemon/node.h"
+#include "daemon/portrange.h"
 
 #include <QCryptographicHash>
 #include <QTimer>
@@ -25,6 +26,12 @@ ConnectionManager::ConnectionManager(DhtManager *dhtManager, XmppManager *xmppMa
     m_xmppManager = xmppManager;
     m_dhtManager = dhtManager;
     loadNodes();
+
+    connect(this, &ConnectionManager::searchResults, [&](const QStringList &results, const QString &bareJid) {
+        for (const QString &result : results) {
+            m_model->addItems(SearchResultItem(result, bareJid));
+        }
+    });
 }
 
 ConnectionManager::~ConnectionManager()
@@ -51,7 +58,11 @@ void ConnectionManager::populateNodeHash()
     connect(m_dhtManager.data(), &DhtManager::peerIpFound, [&](const QString &id, const QHostAddress &ip, const quint16 port) {
         Q_ASSERT(nodeIdMap[id]!=nullptr);
         debugConnectionManager() << "Received ip for:" << nodeIdMap[id]->jid();
-        m_nodeHash[nodeIdMap[id]->jid()] = QSharedPointer<Node>(new Node(id, ip, port));
+
+        // Bittorrent port or dht, not what we need
+        Q_UNUSED(port);
+
+        m_nodeHash[nodeIdMap[id]->jid()] = QSharedPointer<Node>(new Node(id, ip, MIN_PORT));
         nodeIdMap[id] = QSharedPointer<NodeStatus>(new NodeStatus(nodeIdMap[id]->jid(), false));
         saveNodes();
     });
@@ -123,9 +134,14 @@ void ConnectionManager::searchNodes(const QString &keyword)
     for (const QSharedPointer<Node> &node : m_nodeHash.values()) {
         if (node && node->isConnected()) {
             node->search(keyword);
-            connect(node.data(), &Node::searchResults, [&](const QStringList &results) {
-               emit searchResults(results, node->id());
+            connect(node.data(), &Node::searchResults, [=](const QStringList &results) {
+                emit searchResults(results, node->id());
             });
         }
     }
+}
+
+SearchResultModel* ConnectionManager:: model()
+{
+    return m_model;
 }

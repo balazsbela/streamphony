@@ -132,7 +132,6 @@ QImage vCardCache::getAvatar(const QString& bareJid) const
     if (m_mapBareJidVcard.contains(bareJid))
         return getImageFromByteArray(m_mapBareJidVcard[bareJid].photo());
     else {
-        qDebug() << "Avatar not available for" << bareJid;
         return QImage();
     }
 }
