@@ -30,7 +30,7 @@ void XmppManager::signIn()
     m_xmppClient.configuration().setHost(XMPP_SERVER);
     m_xmppClient.configuration().setJid(SettingsManager::instance()->xmppUsername() + QStringLiteral("@") + XMPP_SERVER);
     m_xmppClient.configuration().setPassword(SettingsManager::instance()->password());
-    //m_xmppClient.configuration().setPassword(QStringLiteral("935630"));
+    //m_xmppClient.configuration().setPassword(QStringLiteral("498059"));
 
     m_xmppClient.connectToServer(m_xmppClient.configuration());
 
