@@ -15,6 +15,8 @@ Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObjec
     m_id(id),
     m_ip(ip)
 {
+    m_restClient.setParent(this);
+
     connect(&m_socket, &QTcpSocket::connected, [&]() {
         tryingToConnect = false;
         debugNode() << "Node connected:" << m_id << m_ip;

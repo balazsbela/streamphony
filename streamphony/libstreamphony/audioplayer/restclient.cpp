@@ -1,4 +1,5 @@
 #include "restclient.h"
+#include "resolve_overload.h"
 
 #include <QHostAddress>
 #include <QNetworkReply>
@@ -28,6 +29,11 @@ void RestClient::search(const QHostAddress &host, quint32 port, const QString &k
         qDebug() << "Lenght:" << content.size();
         qDebug() << "RECEIVED SEARCH RESULTS RESPONSE:" << QString::fromUtf8(content);
         emit searchResults(QString::fromUtf8(content).split(QRegExp("[\r\n]"),QString::SkipEmptyParts));
+    });
+
+    connect(replyPointer.data(), utils::resolve_overload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
+            [=](const QNetworkReply::NetworkError &error){
+         qWarning() << "Error during HTTP request:" << replyPointer->errorString();
     });
 }
 
