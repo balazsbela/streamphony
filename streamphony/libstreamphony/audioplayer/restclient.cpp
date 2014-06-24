@@ -33,7 +33,7 @@ void RestClient::search(const QHostAddress &host, quint32 port, const QString &k
 
     connect(replyPointer.data(), utils::resolve_overload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
             [=](const QNetworkReply::NetworkError &error){
-         qWarning() << "Error during HTTP request:" << replyPointer->errorString();
+        qWarning() << "Error during HTTP request:" << replyPointer->errorString();
     });
 }
 

@@ -17,7 +17,7 @@ signals:
     void searchResults(const QStringList &results);
 
 private:
-     QNetworkRequest composeRequest(const QUrl &path) const;
+    QNetworkRequest composeRequest(const QUrl &path) const;
 
 private:
     QNetworkAccessManager m_networkAccessManager;

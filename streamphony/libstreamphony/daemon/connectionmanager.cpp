@@ -36,7 +36,6 @@ ConnectionManager::ConnectionManager(DhtManager *dhtManager, XmppManager *xmppMa
 
 ConnectionManager::~ConnectionManager()
 {
-    qDebug() << m_nodeHash.count();
 }
 
 void ConnectionManager::populateNodeHash()
@@ -140,14 +139,10 @@ void ConnectionManager::searchNodes(const QString &keyword)
             qDebug() << "Searching node:" << node->host();
 
             auto connection = QSharedPointer<QMetaObject::Connection>(new QMetaObject::Connection());
-            *connection = connect(node.data(), &Node::searchResults, [=](const QStringList &results) {
-                qDebug() << "Emiting searchResults with:";
-                for (const QString &result : results) {
-                    qDebug() << result;
-                }
+            *connection = connect(node.data(), &Node::searchResults, [this, node, connection](const QStringList &results) {
                 emit searchResults(results, node->id());
-
-                QObject::disconnect(*connection);
+                bool ok = QObject::disconnect(*connection);
+                Q_ASSERT(ok);
             });
         }
     }
