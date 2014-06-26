@@ -11,7 +11,8 @@ Rectangle {
     signal seek(variant current)
 
     function update(elapsed){
-        bar.width = (elapsed/total)*width
+        console.log(elapsed + "/" + total);
+        bar.width = (elapsed/total) * width
     }
 
     color: "#000000"

@@ -1,7 +1,7 @@
 import QtQuick 2.2
 
 Rectangle {
-    id: plabackScreen
+    id: playbackScreen
     width: 339; height: 102
     color: "#333333"
 
@@ -49,17 +49,7 @@ Rectangle {
             color: "#FFFFFF"
             text: "<b>" + topBox.title + "<b>"
             font { family: "Univers LT Std"; pixelSize: 15 }
-            anchors { top: topBox.top; topMargin: 4; left: topBox.left; leftMargin: 5 }
-            horizontalAlignment: Text.AlignHCenter
-        }
-
-        Text {
-            id: artistStr
-            width: 340
-            color: "#FFFFFF"
-            text: topBox.artist == "" ? "" : topBox.artist + " (" + topBox.album + ")"
-            font { family: "Univers LT Std"; pixelSize: 13 }
-            anchors { top: songTitle.bottom; topMargin: 2; left: topBox.left; leftMargin: 5 }
+            anchors { top: topBox.top; topMargin: 24; left: topBox.left; leftMargin: 5 }
             horizontalAlignment: Text.AlignHCenter
         }
 
@@ -79,20 +69,24 @@ Rectangle {
             width: 100
             height: 28
             anchors { left: topBox.right; leftMargin: -336;}
-            onPlayPausePressed: plabackScreen.playPause()
-            onNextPressed: plabackScreen.next()
-            onPreviousPressed: plabackScreen.previous()
+            onPlayPausePressed: playbackScreen.playPause()
+            onNextPressed: playbackScreen.next()
+            onPreviousPressed: playbackScreen.previous()
         }
 
         ProgressBar {
             id: progressSlider
             x: 111
+            height:1
             width: 209
             anchors.right: buttonPanel.left; anchors.rightMargin: -313; anchors.bottom: parent.bottom
             anchors.bottomMargin: 11
             anchors.top: parent.top
             anchors.topMargin: 83
-            onSeek: playbackScreen.seekMusic(current)
+            onSeek: {
+                _mediaPlayer.seek(current);
+                playbackScreen.seekMusic(current);
+            }
         }
 
         Image {
@@ -110,6 +104,22 @@ Rectangle {
             y: 67
             width: 159; height: 4
             barWidth: 120 // static - TODO: implement the action
+        }
+    }
+
+    Connections {
+        target: _mediaPlayer
+        onTimerPercentage : {
+            updateProgressSlider(percentage);
+        }
+        onCurrentTrackChanged : {
+            topBox.title = title;
+        }
+        onTimerMilliSeconds : {
+            time = msElapsed;
+        }
+        onTotalTimeChanged : {
+            updateTotalTime(totalTimeMs);
         }
     }
 }

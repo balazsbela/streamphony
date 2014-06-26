@@ -39,11 +39,12 @@ public slots:
     void setVolume( int percentage );
 
 signals:
-    void volumeChanged( int volumePercentage);
-    void timerMilliSeconds( qint64 msElapsed );
-    void timerPercentage( unsigned int percentage);
+    void volumeChanged(int volumePercentage);
+    void timerMilliSeconds(qint64 msElapsed);
+    void timerPercentage(unsigned int percentage);
     void seeked(qint64 ms);
     void currentTrackChanged(const QString &title);
+    void totalTimeChanged(int totalTimeMs);
 
 private:
     QScopedPointer<Phonon::MediaObject> m_mediaObject;
@@ -52,6 +53,8 @@ private:
     const Phonon::Path m_audioPath;
     QBuffer m_buffer;
     AudioState m_state;
+
+    void updateCurrentTrack(const QString &url);
 };
 
 #endif // PHONONMEDIAPLAYER_H

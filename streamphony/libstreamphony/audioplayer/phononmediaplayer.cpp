@@ -50,10 +50,10 @@ PhononMediaPlayer::PhononMediaPlayer(QObject *parent)
         }
     });
 
+    m_mediaObject->setTickInterval(1000);
     connect(m_mediaObject.data(), &Phonon::MediaObject::tick, this, [this](qint64 time) {
         emit timerMilliSeconds(time);
-
-        emit timerPercentage( (double) time / (double) m_mediaObject->totalTime() * 100.0);
+        emit timerPercentage( (double) time / (double) 300 * 100.0);
     });
 
 }
@@ -90,12 +90,35 @@ void PhononMediaPlayer::play(const QString &urlString) {
     m_mediaObject->setCurrentSource(mediaStream);
     m_mediaObject->play();
 
+    updateCurrentTrack(urlString);
+}
+
+void PhononMediaPlayer::updateCurrentTrack(const QString &urlString)
+{
     if (urlString.contains("/")) {
-        emit currentTrackChanged(urlString.right(urlString.lastIndexOf("/")));
+        QString name = urlString;
+        const QString left = name.left(urlString.lastIndexOf("/") + 1);
+        name.replace(left, QStringLiteral(""));
+        name = name.left(name.lastIndexOf("."));
+        emit currentTrackChanged(name);
     } else {
         emit currentTrackChanged(urlString);
     }
+
+    connect(m_mediaObject.data(), &Phonon::MediaObject::bufferStatus, this, [this](int percent) {
+        if (percent == 100) {
+            qDebug() << "Buffer percent:" << percent;
+
+            qDebug() << m_mediaObject->currentSource().type();
+        }
+    });
+
+    connect(m_mediaObject.data(), &Phonon::MediaObject::totalTimeChanged, this, [this](qint64 newTotalTime) {
+        qDebug() << "Total time:" << newTotalTime;
+        emit totalTimeChanged(300000);
+    });
 }
+
 
 PhononMediaPlayer::~PhononMediaPlayer()
 {
@@ -142,7 +165,7 @@ void PhononMediaPlayer::seek(qint64 ms)
 }
 
 
-void PhononMediaPlayer::setVolume( int percentage )
+void PhononMediaPlayer::setVolume(int percentage)
 {
     m_audioOuput->setVolume(percentage);
     emit volumeChanged(percentage);
