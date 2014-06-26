@@ -24,6 +24,7 @@ public:
 
     explicit PhononMediaPlayer(QObject *parent = 0);
     ~PhononMediaPlayer() override;
+
     void play(const QString &url);
     AudioState state() const;
 

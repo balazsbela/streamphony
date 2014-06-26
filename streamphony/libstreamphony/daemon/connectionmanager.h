@@ -12,12 +12,13 @@
 
 class Node;
 class DhtManager;
+class PhononMediaPlayer;
 
 class ConnectionManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit ConnectionManager(DhtManager *dhtManager, XmppManager *xmppManager, QObject *parent = 0);
+    explicit ConnectionManager(PhononMediaPlayer *mediaPlayer, DhtManager *dhtManager, XmppManager *xmppManager, QObject *parent = 0);
     ~ConnectionManager() override;
 
     void populateNodeHash();
@@ -35,6 +36,7 @@ private:
     void loadNodes();
 
 private:
+    QPointer<PhononMediaPlayer> m_mediaPlayer;
     QPointer<XmppManager> m_xmppManager;
     QPointer<DhtManager> m_dhtManager;
 

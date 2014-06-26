@@ -10,11 +10,14 @@
 #define debugNode QT_NO_QDEBUG_MACRO
 #endif
 
-Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, QObject *parent) :
+Node::Node(const QString &id, const QHostAddress &ip, const quint16 port, PhononMediaPlayer *player, QObject *parent) :
     QObject(parent),
     m_id(id),
-    m_ip(ip)
+    m_ip(ip),
+    m_player(player)
 {
+    Q_ASSERT(player);
+
     m_restClient.setParent(this);
 
     connect(&m_socket, &QTcpSocket::connected, [&]() {
@@ -91,7 +94,7 @@ QString Node::id() const
 
 void Node::play(const QString &file)
 {
-    m_player.play(QStringLiteral("http://") +
+    m_player->play(QStringLiteral("http://") +
                   m_ip.toString() +
                   QStringLiteral(":") +
                   QString::number(m_port) +

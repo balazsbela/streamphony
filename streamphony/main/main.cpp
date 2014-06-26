@@ -7,6 +7,7 @@
 #include "daemon/portrange.h"
 #include "daemon/connectionmanager.h"
 #include "xmpp/gui/xmppimageprovider.h"
+#include "audioplayer/phononmediaplayer.h"
 
 #include <QApplication>
 #include <QCryptographicHash>
@@ -58,7 +59,8 @@ int main(int argc, char *argv[])
         dht.start(&ownId, port, QStringLiteral("streamphonydht"), QStringLiteral("bdboot.txt"));
     });
 
-    ConnectionManager connectionManager(&dht, &xmppManager, &app);
+    PhononMediaPlayer mediaPlayer(&app);
+    ConnectionManager connectionManager(&mediaPlayer, &dht, &xmppManager, &app);
 
     QTimer dhtReadyTimer;
     dhtReadyTimer.setInterval(10000);
@@ -74,6 +76,7 @@ int main(int argc, char *argv[])
     XmppImageProvider *imageProvider = new XmppImageProvider(&xmppManager);
 
     qmlRegisterUncreatableType<XmppManager>("Streamphony", 1, 0, "XmppManager", QString("XmppManager not creatable from QML"));
+    qmlRegisterUncreatableType<PhononMediaPlayer>("Streamphony", 1, 0, "MediaPlayer", QString("MediaPlayer not creatable from QML"));
     qmlRegisterUncreatableType<ConnectionManager>("Streamphony", 1, 0, "ConnectionManager", QString("ConnectionManager not creatable from QML"));
 
     QQmlApplicationEngine engine;
@@ -81,6 +84,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("_rosterModel"), xmppManager.model());
     engine.rootContext()->setContextProperty(QStringLiteral("_searchResultModel"), connectionManager.model());
     engine.rootContext()->setContextProperty(QStringLiteral("_xmppManager"), &xmppManager);
+    engine.rootContext()->setContextProperty(QStringLiteral("_mediaPlayer"), &mediaPlayer);
     engine.rootContext()->setContextProperty(QStringLiteral("_connectionManager"), &connectionManager);
     engine.load(QUrl(QStringLiteral("qrc:///gui/Main.qml")));
 

@@ -17,12 +17,14 @@
 
 static const QString NODE_CACHE_FILE = QStringLiteral("nodeCache.txt");
 
-ConnectionManager::ConnectionManager(DhtManager *dhtManager, XmppManager *xmppManager, QObject *parent) :
+ConnectionManager::ConnectionManager(PhononMediaPlayer *mediaPlayer, DhtManager *dhtManager, XmppManager *xmppManager, QObject *parent) :
     QObject(parent)
 {
     Q_ASSERT(xmppManager);
     Q_ASSERT(dhtManager);
+    Q_ASSERT(mediaPlayer);
 
+    m_mediaPlayer = mediaPlayer;
     m_xmppManager = xmppManager;
     m_dhtManager = dhtManager;
     loadNodes();
@@ -62,7 +64,7 @@ void ConnectionManager::populateNodeHash()
         // Bittorrent port or dht, not what we need
         Q_UNUSED(port);
 
-        m_nodeHash[nodeIdMap[id]->jid()] = QSharedPointer<Node>(new Node(id, ip, MIN_PORT));
+        m_nodeHash[nodeIdMap[id]->jid()] = QSharedPointer<Node>(new Node(id, ip, MIN_PORT, m_mediaPlayer));
         nodeIdMap[id] = QSharedPointer<NodeStatus>(new NodeStatus(nodeIdMap[id]->jid(), false));
         saveNodes();
     });
@@ -123,7 +125,7 @@ void ConnectionManager::loadNodes() {
         const quint32 port = tokens[2].toUInt(&ok);
         Q_ASSERT(ok);
 
-        m_nodeHash[tokens.first()] = QSharedPointer<Node>(new Node(id, host, port));
+        m_nodeHash[tokens.first()] = QSharedPointer<Node>(new Node(id, host, port, m_mediaPlayer));
     }
 
     cacheFile.close();
