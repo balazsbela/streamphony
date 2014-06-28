@@ -11,7 +11,6 @@ Rectangle {
     signal seek(variant current)
 
     function update(elapsed){
-        console.log(elapsed + "/" + total);
         bar.width = (elapsed/total) * width
     }
 
@@ -30,6 +29,8 @@ Rectangle {
 
     MouseArea {
         anchors.fill: parent
-        onClicked: progressBar.seek((mouse.x/progressBar.width)*progressBar.total)
+        onClicked: {
+            progressBar.seek((mouse.x / progressBar.width) * progressBar.total)
+        }
     }
 }

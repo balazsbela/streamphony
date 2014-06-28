@@ -23,6 +23,12 @@ void RestClient::search(const QHostAddress &host, quint32 port, const QString &k
     QUrl url(SEARCH_URL.arg(host.toString()).arg(port).arg(keyword));
     QNetworkReply *reply = m_networkAccessManager.get(composeRequest(url));
     QSharedPointer<QNetworkReply> replyPointer(reply);
+
+    connect(replyPointer.data(), utils::resolve_overload<QNetworkReply::NetworkError>::of(&QNetworkReply::error),
+            this, [this, replyPointer]() {
+        qWarning() << "Error occured:" << replyPointer->errorString();
+    });
+
     connect(replyPointer.data(), &QNetworkReply::finished, [=](){
 
         const QByteArray &content = replyPointer->readAll();

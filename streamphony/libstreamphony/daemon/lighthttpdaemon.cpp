@@ -3,11 +3,18 @@
 #include "contentresolver.h"
 
 #include <QTcpSocket>
+#include <QSharedPointer>
+#include <QMultiMap>
 
 // HTTP Constants
 const QString OK_HEADER = QStringLiteral("HTTP/1.1 200 OK\r\n");
 const QString BAD_REQUEST = QStringLiteral("HTTP/1.1 400 Bad Request\r\n\r\n");
 const QString CONTENT_LENGTH_HEADER = QStringLiteral("Content-Length: %1 \r\n\r\n");
+const QString META_LENGTH_HEADER = QStringLiteral("Meta-Lenght: %1 \r\n");
+const QString META_ARTIST_HEADER = QStringLiteral("Meta-Artist: %1 \r\n");
+const QString META_TITLE_HEADER = QStringLiteral("Meta-Title: %1 \r\n");
+const QString META_ALBUM_HEADER = QStringLiteral("Meta-Album: %1 \r\n");
+
 const QString SEARCH_PATTERN = QStringLiteral("/search?keyword=");
 
 
@@ -93,11 +100,11 @@ void LightHttpDaemon::handleClient()
 
         const QStringList &tokens = QString(socket->readLine()).split(QRegExp("[ \r\n][ \r\n]*"));
 
-        QTextStream os(socket);
+        QSharedPointer<QTextStream> os(new QTextStream(socket));
 
         if (tokens.size() < 3) {
             qWarning() << "Invalid request!";
-            os << BAD_REQUEST;
+            *os << BAD_REQUEST;
             socket->close();
             return;
         }
@@ -122,14 +129,15 @@ void LightHttpDaemon::handleClient()
                     }
                 }
 
-                os << OK_HEADER;
-                os << CONTENT_LENGTH_HEADER.arg(contentLength);
+                *os << OK_HEADER;
+                *os << CONTENT_LENGTH_HEADER.arg(contentLength);
 
                 for (const QString &part : result) {
-                    os << part << endl;
+                    *os << part << endl;
                 }
 
-                os.flush();
+                os->flush();
+                socket->close();
 
             } else {
                 // File access
@@ -141,15 +149,21 @@ void LightHttpDaemon::handleClient()
                     content = m_contentResolver->resolve(filePaths.first());
                 }
 
-                os << OK_HEADER;
-                os << CONTENT_LENGTH_HEADER.arg(content.size());
+                m_contentResolver->length(filePaths.first());
+                connect (m_contentResolver.data(), &ContentResolver::metaDataReceived, this, [=](quint64 length, QMap<QString, QString> meta) {
+                    *os << OK_HEADER;
+                    *os << META_LENGTH_HEADER.arg(length);
+                    *os << META_ARTIST_HEADER.arg(meta["ARTIST"]);
+                    *os << META_TITLE_HEADER.arg(meta["TITLE"]);
+                    *os << META_ALBUM_HEADER.arg(meta["ALBUM"]);
+                    *os << CONTENT_LENGTH_HEADER.arg(content.size());
 
-                os.flush();
+                    os->flush();
 
-                socket->write(content);
+                    socket->write(content);
+                    socket->close();
+                });
             }
-
-            socket->close();
         }
     }
 }

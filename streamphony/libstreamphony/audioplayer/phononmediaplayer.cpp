@@ -84,8 +84,20 @@ void PhononMediaPlayer::play(const QString &urlString) {
     request.setRawHeader(QByteArrayLiteral("Accept-Encoding"), {});
     request.setRawHeader(QByteArrayLiteral("Accept-Language"), {});
 
-    QNetworkReply *reply = networkManager->get(request);
-    MediaStream *mediaStream = new MediaStream(QSharedPointer<QNetworkReply>(reply), this);
+    QSharedPointer<QNetworkReply> reply(networkManager->get(request));
+
+    connect(reply.data(), &QNetworkReply::finished, this, [this, reply]() {
+        quint64 length = reply->rawHeader(QByteArrayLiteral("Meta-Lenght")).toInt();
+        emit totalTimeChanged(length);
+
+        const QString &artist = reply->rawHeader(QByteArrayLiteral("Meta-Artist"));
+        const QString &title = reply->rawHeader(QByteArrayLiteral("Meta-Title"));
+        const QString &album = reply->rawHeader(QByteArrayLiteral("Meta-Album"));
+
+        emit metaDataReceived(artist, title, album);
+    });
+
+    MediaStream *mediaStream = new MediaStream(reply, this);
 
     m_mediaObject->setCurrentSource(mediaStream);
     m_mediaObject->play();
@@ -113,10 +125,6 @@ void PhononMediaPlayer::updateCurrentTrack(const QString &urlString)
         }
     });
 
-    connect(m_mediaObject.data(), &Phonon::MediaObject::totalTimeChanged, this, [this](qint64 newTotalTime) {
-        qDebug() << "Total time:" << newTotalTime;
-        emit totalTimeChanged(300000);
-    });
 }
 
 

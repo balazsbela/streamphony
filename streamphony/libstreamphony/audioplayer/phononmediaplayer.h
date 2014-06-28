@@ -45,6 +45,7 @@ signals:
     void seeked(qint64 ms);
     void currentTrackChanged(const QString &title);
     void totalTimeChanged(int totalTimeMs);
+    void metaDataReceived(const QString &artist, const QString &title, const QString &album);
 
 private:
     QScopedPointer<Phonon::MediaObject> m_mediaObject;

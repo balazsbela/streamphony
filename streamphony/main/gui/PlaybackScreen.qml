@@ -28,15 +28,26 @@ Rectangle {
         topBox.title = title
         topBox.artist = artist
         topBox.album = album
-        albumCoverBox.source = path
+    }
+
+    function updateTimeElapsed(elapsed) {
+        updateProgressSlider(elapsed);
+
+        var totalSeconds = elapsed / 1000;
+
+        var minutes = Math.floor(totalSeconds / 60);
+        var seconds = Math.floor(totalSeconds % 60);
+
+        var secondString = seconds < 10 ? "0" + seconds : seconds;
+        time = minutes + ":" + secondString;
     }
 
     Rectangle {
         id: topBox
 
-        property string title: "Title"
-        property string artist: "Artist"
-        property string album: "Album"
+        property string title: ""
+        property string artist: ""
+        property string album: ""
 
         width: 341; height: 102
         color: "#212121"
@@ -44,12 +55,32 @@ Rectangle {
         radius: 4
 
         Text {
+            id: artist
+            width: 340
+            color: "#FFFFFF"
+            text: topBox.artist == "" ? "" : topBox.artist
+            font { family: "Univers LT Std"; pixelSize: 13 }
+            anchors { top: topBox.top; topMargin: 2; left: topBox.left; leftMargin: 5 }
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Text {
             id: songTitle
             width: 340
             color: "#FFFFFF"
-            text: "<b>" + topBox.title + "<b>"
+            text: topBox.title == "" ? "" : topBox.title
             font { family: "Univers LT Std"; pixelSize: 15 }
-            anchors { top: topBox.top; topMargin: 24; left: topBox.left; leftMargin: 5 }
+            anchors { top: artist.bottom; topMargin: 5; left: topBox.left; leftMargin: 5 }
+            horizontalAlignment: Text.AlignHCenter
+        }
+
+        Text {
+            id: album
+            width: 340
+            color: "#FFFFFF"
+            text: topBox.album == "" ? "" : topBox.album
+            font { family: "Univers LT Std"; pixelSize: 13 }
+            anchors { top: songTitle.bottom; topMargin: 2; left: topBox.left; leftMargin: 5 }
             horizontalAlignment: Text.AlignHCenter
         }
 
@@ -110,16 +141,19 @@ Rectangle {
     Connections {
         target: _mediaPlayer
         onTimerPercentage : {
-            updateProgressSlider(percentage);
+           // updateProgressSlider(percentage);
         }
         onCurrentTrackChanged : {
             topBox.title = title;
         }
         onTimerMilliSeconds : {
-            time = msElapsed;
+           updateTimeElapsed(msElapsed);
         }
         onTotalTimeChanged : {
             updateTotalTime(totalTimeMs);
+        }
+        onMetaDataReceived : {
+           changeCurrentMusic(title, artist, album);
         }
     }
 }

@@ -17,6 +17,7 @@ public:
 
     QByteArray resolve(const QString &path, quint64 offset = 0) override;
     QStringList matches(const QString &keyword) override;
+    void length(const QString &path) override;
     void find (const QString &keyword, const QDir &rootFolder, QStringList *results);
 
 private:

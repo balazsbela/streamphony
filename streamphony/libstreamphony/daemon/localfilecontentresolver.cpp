@@ -4,6 +4,8 @@
 #include <QFile>
 #include <QDir>
 #include <QDebug>
+#include <QSharedPointer>
+#include <phonon/MediaObject>
 
 const QStringList FILE_TYPES = {QStringLiteral("*%1.mp3"),
                                 QStringLiteral("*%1.ogg")};
@@ -82,6 +84,47 @@ QStringList LocalFileContentResolver::matches(const QString &keyword)
         find(searchKey, sharedDir, &results);
     }
     return results;
+}
+
+void LocalFileContentResolver::length(const QString &path) {
+
+    QFile file(path);
+     if (!file.exists())
+         return;
+
+     Phonon::MediaObject *resolver = new Phonon::MediaObject();
+     resolver->setCurrentSource(Phonon::MediaSource(path));
+     resolver->play();
+
+     auto connection = QSharedPointer<QMetaObject::Connection>(new QMetaObject::Connection());
+     *connection = connect(resolver, &Phonon::MediaObject::stateChanged, [=](Phonon::State newState, Phonon::State oldstate) {
+        if (newState == Phonon::PlayingState) {
+            quint64 totalTime = resolver->totalTime();
+            if (totalTime > 0) {
+
+                const QString artist = resolver->metaData(QStringLiteral("ARTIST")).isEmpty() ? QStringLiteral("")
+                                                                                              : resolver->metaData(QStringLiteral("ARTIST")).first();
+
+                const QString title = resolver->metaData(QStringLiteral("TITLE")).isEmpty() ? QStringLiteral("")
+                                                                                              : resolver->metaData(QStringLiteral("TITLE")).first();
+
+                const QString album = resolver->metaData(QStringLiteral("ALBUM")).isEmpty() ? QStringLiteral("")
+                                                                                              : resolver->metaData(QStringLiteral("ALBUM")).first();
+
+
+
+
+                emit metaDataReceived(resolver->totalTime(), {{QStringLiteral("ARTIST"),artist},
+                                                              {QStringLiteral("TITLE"), title},
+                                                              {QStringLiteral("ALBUM"), album}
+                                                             });
+
+                disconnect(*connection);
+                resolver->stop();
+                resolver->deleteLater();
+            }
+        }
+     });
 }
 
 
