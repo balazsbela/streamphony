@@ -35,14 +35,17 @@ PhononMediaPlayer::PhononMediaPlayer(QObject *parent)
         }
         case Phonon::PlayingState : {
             m_state =  Playing;
+            emit playbackStateChanged(true);
             break;
         }
         case Phonon::StoppedState : {
             m_state = Stopped;
+            emit playbackStateChanged(false);
             break;
         }
         case Phonon::PausedState : {
             m_state = Paused;
+            emit playbackStateChanged(false);
             break;
         }
         default:
@@ -172,10 +175,9 @@ void PhononMediaPlayer::seek(qint64 ms)
     emit seeked(ms);
 }
 
-
 void PhononMediaPlayer::setVolume(int percentage)
 {
-    m_audioOuput->setVolume(percentage);
+    m_audioOuput->setVolume((qreal) percentage / 100);
     emit volumeChanged(percentage);
 }
 

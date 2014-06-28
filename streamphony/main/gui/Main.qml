@@ -57,5 +57,15 @@ ApplicationWindow {
         color: "#333333"
         border.width: 1
     }
+
+    Connections {
+        target: playbackScreen
+        onNext: {
+            results.next();
+        }
+        onPrevious: {
+            results.previous();
+        }
+    }
 }
 

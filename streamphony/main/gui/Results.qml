@@ -2,6 +2,25 @@ import QtQuick 2.0
 
 Rectangle {
     id: resultListComponent
+
+    function next() {
+        if (resultList.currentIndex < resultList.count) {
+            resultList.currentIndex++;
+            if (resultList.currentItem)
+                _connectionManager.play(resultList.currentItem.currentSong,
+                                        resultList.currentItem.currentJid)
+        }
+    }
+
+    function previous() {
+        if (resultList.currentIndex > 0) {
+            resultList.currentIndex--;
+            if (resultList.currentItem)
+                _connectionManager.play(resultList.currentItem.currentSong,
+                                        resultList.currentItem.currentJid)
+        }
+    }
+
     ListView {
         id: resultList
         clip: true
@@ -21,6 +40,10 @@ Rectangle {
 
         model: _searchResultModel
         delegate: Item {
+
+            property string currentSong : filename
+            property string currentJid : jid
+
             x: 5
 
             width:500

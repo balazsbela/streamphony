@@ -12,9 +12,9 @@ Rectangle {
 
     function changePlayPauseIcon(currentIcon){
         if(currentIcon == "play")
-            buttonPlayPause.source = "icons/play.png"
+            buttonPlayPause.iconSource = "icons/play.png"
         else
-            buttonPlayPause.source = "icons/pause.png"
+            buttonPlayPause.iconSource = "icons/pause.png"
     }
 
     color : parent.color

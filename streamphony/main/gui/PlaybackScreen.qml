@@ -6,6 +6,7 @@ Rectangle {
     color: "#333333"
 
     property alias time: timeStr.text
+    property bool playing
 
     signal seekMusic(variant time)
     signal playPause
@@ -100,7 +101,14 @@ Rectangle {
             width: 100
             height: 28
             anchors { left: topBox.right; leftMargin: -336;}
-            onPlayPausePressed: playbackScreen.playPause()
+            onPlayPausePressed: {
+                if (playing)
+                    _mediaPlayer.pause();
+                else
+                    _mediaPlayer.play();
+
+                playbackScreen.playPause()
+            }
             onNextPressed: playbackScreen.next()
             onPreviousPressed: playbackScreen.previous()
         }
@@ -134,7 +142,12 @@ Rectangle {
             x: 127
             y: 67
             width: 159; height: 4
-            barWidth: 120 // static - TODO: implement the action
+            barWidth: 100
+            total: 100
+            onSeek : {
+                _mediaPlayer.setVolume(Math.floor(current))
+                volumeSlider.update(Math.floor(current));
+            }
         }
     }
 
@@ -142,9 +155,6 @@ Rectangle {
         target: _mediaPlayer
         onTimerPercentage : {
            // updateProgressSlider(percentage);
-        }
-        onCurrentTrackChanged : {
-            topBox.title = title;
         }
         onTimerMilliSeconds : {
            updateTimeElapsed(msElapsed);
@@ -154,6 +164,17 @@ Rectangle {
         }
         onMetaDataReceived : {
            changeCurrentMusic(title, artist, album);
+        }
+        onPlaybackStateChanged : {
+            playing = isPlaying
+            if (isPlaying)
+                changePlayPauseIcon("pause");
+            else
+                changePlayPauseIcon("play");
+        }
+
+        onVolumeChanged : {
+            volumeSlider.update(volumePercentage);
         }
     }
 }

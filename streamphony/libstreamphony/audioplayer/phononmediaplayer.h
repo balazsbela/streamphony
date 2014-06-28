@@ -36,7 +36,7 @@ public slots:
     void previous();
     void next();
     void seek(qint64 ms);
-    void setVolume( int percentage );
+    void setVolume(int percentage);
 
 signals:
     void volumeChanged(int volumePercentage);
@@ -46,6 +46,7 @@ signals:
     void currentTrackChanged(const QString &title);
     void totalTimeChanged(int totalTimeMs);
     void metaDataReceived(const QString &artist, const QString &title, const QString &album);
+    void playbackStateChanged(bool isPlaying);
 
 private:
     QScopedPointer<Phonon::MediaObject> m_mediaObject;
