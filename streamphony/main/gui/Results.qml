@@ -4,7 +4,7 @@ Rectangle {
     id: resultListComponent
 
     function next() {
-        if (resultList.currentIndex < resultList.count) {
+        if (resultList.currentIndex < resultList.count - 1) {
             resultList.currentIndex++;
             if (resultList.currentItem)
                 _connectionManager.play(resultList.currentItem.currentSong,
