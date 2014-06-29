@@ -17,11 +17,6 @@ TARGET = streamphony
 TEMPLATE = lib
 CONFIG += staticlib bitdht
 
-SERVER_ONLY {
-    DEFINES += SERVER_ONLY
-}
-
-!SERVER_ONLY {
 SOURCES += \
     dht/dhtmanager.cpp \
     dht/dhtcallbacks.cpp \
@@ -33,9 +28,6 @@ SOURCES += \
     daemon/localfilecontentresolver.cpp \
     daemon/connectionmanager.cpp \
     daemon/node.cpp \
-    audioplayer/mediastream.cpp \
-    audioplayer/phononmediaplayer.cpp \
-    audioplayer/restclient.cpp \
     xmpp/gui/rosterItem.cpp \
     xmpp/gui/rosterItemModel.cpp \
     xmpp/gui/rosterItemSortFilterProxyModel.cpp \
@@ -48,7 +40,6 @@ HEADERS += \
     dht/dhtmanager.h \
     dht/dhtdebug.h \
     dht/dhtcallbacks.h \
-    dht/dhtconversions.h \
     xmpp/xmppmanager.h \
     xmpp/vcardcache.h \
     xmpp/utils.h \
@@ -60,9 +51,7 @@ HEADERS += \
     daemon/connectionmanager.h \
     daemon/node.h \
     daemon/nodestatus.h \
-    audioplayer/mediastream.h \
-    audioplayer/phononmediaplayer.h \
-    audioplayer/restclient.h \
+    dht/dhtconversions.h \
     xmpp/gui/rosterItem.h \
     xmpp/gui/rosterItemModel.h \
     xmpp/gui/rosterItemSortFilterProxyModel.h \
@@ -70,20 +59,18 @@ HEADERS += \
     daemon/gui/searchresultmodel.h \
     daemon/gui/searchresultitem.h \
     daemon/gui/listmodel.h
-}
 
-SERVER_ONLY {
-SOURCES += \
-    settings/settingsmanager.cpp \
-    daemon/lighthttpdaemon.cpp \
-    daemon/localfilecontentresolver.cpp
 
-HEADERS += \
-    settings/settingsmanager.h \
-    daemon/lighthttpdaemon.h \
-    daemon/localfilecontentresolver.h \
-    daemon/contentresolver.h \
-    daemon/portrange.h
+!SERVER_ONLY {
+    SOURCES += \
+        audioplayer/mediastream.cpp \
+        audioplayer/phononmediaplayer.cpp \
+        audioplayer/restclient.cpp
+
+    HEADERS = \
+        audioplayer/mediastream.h \
+        audioplayer/phononmediaplayer.h \
+        audioplayer/restclient.h \
 }
 
 #unix {

@@ -5,10 +5,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QSharedPointer>
-
-#ifndef SERVER_ONLY
 #include <phonon/MediaObject>
-#endif
 
 const QStringList FILE_TYPES = {QStringLiteral("*%1.mp3"),
                                 QStringLiteral("*%1.ogg")};

@@ -53,9 +53,7 @@ LightHttpDaemon::LightHttpDaemon(quint32 preferredPort, quint32 minPort, quint32
 
 LightHttpDaemon::~LightHttpDaemon()
 {
-#ifndef SERVER_ONLY
     m_portForwarder.remove(m_port);
-#endif
 }
 
 void LightHttpDaemon::setContentResolver(ContentResolver *contentResolver)
