@@ -89,16 +89,15 @@ QStringList LocalFileContentResolver::matches(const QString &keyword)
 void LocalFileContentResolver::length(const QString &path) {
 
     QFile file(path);
-    if (!file.exists())
-        return;
+     if (!file.exists())
+         return;
 
-#ifndef SERVER_ONLY
-    Phonon::MediaObject *resolver = new Phonon::MediaObject();
-    resolver->setCurrentSource(Phonon::MediaSource(path));
-    resolver->play();
+     Phonon::MediaObject *resolver = new Phonon::MediaObject();
+     resolver->setCurrentSource(Phonon::MediaSource(path));
+     resolver->play();
 
-    auto connection = QSharedPointer<QMetaObject::Connection>(new QMetaObject::Connection());
-    *connection = connect(resolver, &Phonon::MediaObject::stateChanged, [=](Phonon::State newState, Phonon::State oldstate) {
+     auto connection = QSharedPointer<QMetaObject::Connection>(new QMetaObject::Connection());
+     *connection = connect(resolver, &Phonon::MediaObject::stateChanged, [=](Phonon::State newState, Phonon::State oldstate) {
         if (newState == Phonon::PlayingState) {
             quint64 totalTime = resolver->totalTime();
             if (totalTime > 0) {
@@ -107,10 +106,10 @@ void LocalFileContentResolver::length(const QString &path) {
                                                                                               : resolver->metaData(QStringLiteral("ARTIST")).first();
 
                 const QString title = resolver->metaData(QStringLiteral("TITLE")).isEmpty() ? QStringLiteral("")
-                                                                                            : resolver->metaData(QStringLiteral("TITLE")).first();
+                                                                                              : resolver->metaData(QStringLiteral("TITLE")).first();
 
                 const QString album = resolver->metaData(QStringLiteral("ALBUM")).isEmpty() ? QStringLiteral("")
-                                                                                            : resolver->metaData(QStringLiteral("ALBUM")).first();
+                                                                                              : resolver->metaData(QStringLiteral("ALBUM")).first();
 
 
 
@@ -118,22 +117,14 @@ void LocalFileContentResolver::length(const QString &path) {
                 emit metaDataReceived(resolver->totalTime(), {{QStringLiteral("ARTIST"),artist},
                                                               {QStringLiteral("TITLE"), title},
                                                               {QStringLiteral("ALBUM"), album}
-                                      });
+                                                             });
 
                 disconnect(*connection);
                 resolver->stop();
                 resolver->deleteLater();
             }
         }
-    });
-
-#else
-    emit metaDataReceived(300, {{QStringLiteral("ARTIST"),QStringLiteral("")},
-                                {QStringLiteral("TITLE"), QStringLiteral("")},
-                                {QStringLiteral("ALBUM"), QStringLiteral("")}
-                               });
-#endif
-
+     });
 }
 
 

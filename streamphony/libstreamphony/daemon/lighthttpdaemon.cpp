@@ -41,11 +41,8 @@ LightHttpDaemon::LightHttpDaemon(quint32 preferredPort, quint32 minPort, quint32
         return;
     }
 
-#ifndef SERVER_ONLY
     if (m_portForwarder.init(2000))
         m_portForwarder.add(m_port);
-
-#endif
 
     connect(this, &QTcpServer::newConnection, this, &LightHttpDaemon::acceptConnection);
     setMaxPendingConnections(MAX_PENDING_CONNECTIONS);

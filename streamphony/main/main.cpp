@@ -6,11 +6,8 @@
 #include "singleshottimer.h"
 #include "daemon/portrange.h"
 #include "daemon/connectionmanager.h"
-#include "audioplayer/phononmediaplayer.h"
-
-#ifndef SERVER_ONLY
 #include "xmpp/gui/xmppimageprovider.h"
-#endif
+#include "audioplayer/phononmediaplayer.h"
 
 #include <QApplication>
 #include <QCryptographicHash>
@@ -18,12 +15,9 @@
 #include <QHostAddress>
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
-
-#ifndef SERVER_ONLY
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QtQml>
-#endif
 
 static const int MINIMAL_NUMBER_OF_NODES = 2;
 
@@ -46,10 +40,6 @@ int main(int argc, char *argv[])
     });
 
     XmppManager xmppManager(&app);
-
-#ifdef SERVER_ONLY
-    xmppManager.signIn();
-#endif
 
     LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
     LightHttpDaemon daemon(settingsManager.httpPort(), MIN_PORT, MAX_PORT, &app);
@@ -82,7 +72,6 @@ int main(int argc, char *argv[])
     });
     dhtReadyTimer.start();
 
-#ifndef SERVER_ONLY
     XmppImageProvider *imageProvider = new XmppImageProvider(&xmppManager);
 
     qmlRegisterUncreatableType<XmppManager>("Streamphony", 1, 0, "XmppManager", QString("XmppManager not creatable from QML"));
@@ -99,7 +88,6 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("_connectionManager"), &connectionManager);
     engine.rootContext()->setContextProperty(QStringLiteral("_settingsManager"), &settingsManager);
     engine.load(QUrl(QStringLiteral("qrc:///gui/Main.qml")));
-#endif
 
     return app.exec();
 }
