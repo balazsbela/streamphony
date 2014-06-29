@@ -160,6 +160,7 @@ Rectangle {
            updateTimeElapsed(msElapsed);
         }
         onTotalTimeChanged : {
+            console.log("Song length:" + totalTimeMs);
             updateTotalTime(totalTimeMs);
         }
         onMetaDataReceived : {

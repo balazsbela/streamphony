@@ -2,6 +2,7 @@ import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Layouts 1.0
 import QtQuick.Dialogs 1.0
+import QtQuick.Controls.Styles 1.2
 
 ApplicationWindow {
     id: loginWindow
@@ -29,6 +30,7 @@ ApplicationWindow {
             text: qsTr("Login with Facebook")
             font.family: "Times New Roman"
             font.pixelSize: 25
+            color: "#ccdacc"
         }
 
         Button {
@@ -95,6 +97,7 @@ ApplicationWindow {
             y: 168
             text: qsTr("@chat.facebook.com")
             font.pixelSize: 12
+            color: "#ccdacc"
         }
 
     }
@@ -103,7 +106,13 @@ ApplicationWindow {
         id: passwordCheckBox
         x: 191
         y: 221
-        text: qsTr("Remember password")
+        style:
+            CheckBoxStyle {
+            label: Text {
+                color: "#ccdacc"
+                text: qsTr("Remember password")
+            }
+        }
         checked: true
     }
 }
