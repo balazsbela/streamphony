@@ -7,7 +7,11 @@
 include(../global.pri);
 include(../utils/utils.pri);
 
-QT       += core network phonon4qt5
+QT       += core network
+
+!SERVER_ONLY {
+    QT += phonon4qt5
+}
 
 QT       -= gui
 

@@ -6,11 +6,22 @@ include(global.pri)
 TEMPLATE = subdirs
 CONFIG += ordered
 
+SERVER_ONLY {
+    DEFINES += SERVER_ONLY
+
+    SUBDIRS +=  utils \
+        libstreamphony \
+        audioserver
+}
+
+!SERVER_ONLY {
+
 SUBDIRS +=  utils \
     3rdparty \
     libstreamphony \
     audioserver \
-    audioplayer \    
+    audioplayer \
     main/main.pro
+}
 
 

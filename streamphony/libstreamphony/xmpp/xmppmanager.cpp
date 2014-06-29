@@ -23,6 +23,12 @@ XmppManager::~XmppManager()
 {
 }
 
+void XmppManager::signIn()
+{
+    signIn(SettingsManager::instance()->xmppUsername(), SettingsManager::instance()->password(), true);
+}
+
+
 void XmppManager::signIn(const QString &username, const QString &password, bool rememberPassword)
 {
     m_rosterItemModel.clear();

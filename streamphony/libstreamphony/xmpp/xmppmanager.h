@@ -21,6 +21,7 @@ public:
     ~XmppManager() override;
 
     Q_INVOKABLE void signIn(const QString &username, const QString &password, bool rememberPassword);
+    void signIn();
     QStringList allAvailableJids() const;
     const QXmppRosterIq::Item roster(const QString &bareJid);
     QByteArray userUniqueId(const QString &bareJid);
