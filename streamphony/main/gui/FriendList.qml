@@ -19,7 +19,11 @@ Rectangle {
             height: 45
             Row {
                 id: row1
+                width : parent.width
+                height : parent.height
+
                 Rectangle {
+                    id: mainContainer
                     width: parent.width
                     height: parent.height
                     color: friendsListComponent.color
@@ -55,12 +59,31 @@ Rectangle {
                     }
 
                     Text {
+                        id: nameText
                         text: name
                         anchors.verticalCenter: avatarHolder.verticalCenter
                         anchors.left: avatarHolder.right
                         anchors.leftMargin: 10
                         font.bold: true
                         color: "#ccdacc"
+                    }
+
+                    Text {
+                        text: _connectionManager.isDiscovered(bareJid) ? "Discovered" :  "Discovering";
+                        anchors.verticalCenter: avatarHolder.verticalCenter
+                        anchors.left: avatarHolder.right
+                        anchors.leftMargin: 190
+                        font.bold: true
+                        color: _connectionManager.isDiscovered(bareJid) ? "#62E327" : "#F4CF3D"
+                    }
+
+                    MouseArea {
+                        anchors.fill : parent
+                        onClicked : {
+                            if (_connectionManager.isDiscovered(bareJid)) {
+                                 _connectionManager.listNode(bareJid);
+                            }
+                        }
                     }
                 }
                 spacing: 1

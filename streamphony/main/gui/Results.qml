@@ -61,12 +61,23 @@ Rectangle {
                     clip:true
 
                     Text {
-                        text: filename + " - " +  _xmppManager.fullName(jid)
+                        id: jidText
+                        text: filename
                         anchors.verticalCenter: parent.verticalCenter
                         font.bold: true
                         color: "#ccdacc"
                         clip: true
-                        width : parent.width
+                        width : parent.width - 120
+                    }
+
+                    Text {
+                        text: _xmppManager.fullName(jid)
+                        anchors.left: row1.left
+                        anchors.leftMargin: 400
+                        anchors.verticalCenter: parent.verticalCenter
+                        font.bold: true
+                        color: "#62E327"
+                        clip: true
                     }
 
                     MouseArea {

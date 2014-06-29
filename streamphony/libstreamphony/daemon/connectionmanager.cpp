@@ -137,15 +137,15 @@ void ConnectionManager::searchNodes(const QString &keyword)
 
     for (const QSharedPointer<Node> &node : m_nodeHash.values()) {
         if (node && node->isConnected()) {
-            node->search(keyword);
-            qDebug() << "Searching node:" << node->host();
-
             auto connection = QSharedPointer<QMetaObject::Connection>(new QMetaObject::Connection());
             *connection = connect(node.data(), &Node::searchResults, [this, node, connection](const QStringList &results) {
                 emit searchResults(results, node->id());
                 bool ok = QObject::disconnect(*connection);
                 Q_ASSERT(ok);
             });
+
+            node->search(keyword);
+            qDebug() << "Searching node:" << node->host();
         }
     }
 }
@@ -160,4 +160,27 @@ void ConnectionManager::play(const QString &fileName, const QString &bareJid)
     auto node = m_nodeHash[bareJid];
     if (node)
         node->play(fileName);
+}
+
+bool ConnectionManager::isDiscovered(const QString &jid)
+{
+    return m_nodeHash.contains(jid) && m_nodeHash[jid]->isConnected();
+}
+
+void ConnectionManager::listNode(const QString &bareJid)
+{
+    if (isDiscovered(bareJid)) {
+        m_model->removeItems();
+
+        auto node = m_nodeHash[bareJid];
+        auto connection = QSharedPointer<QMetaObject::Connection>(new QMetaObject::Connection());
+        *connection = connect(node.data(), &Node::searchResults, [this, node, connection](const QStringList &results) {
+            emit searchResults(results, node->id());
+            bool ok = QObject::disconnect(*connection);
+            Q_ASSERT(ok);
+        });
+
+        node->search(QStringLiteral("*"));
+        qDebug() << "Browsing node:" << node->host();
+    }
 }

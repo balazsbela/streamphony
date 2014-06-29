@@ -25,6 +25,8 @@ public:
 
     Q_INVOKABLE void searchNodes(const QString &keyword);
     Q_INVOKABLE void play(const QString &fileName, const QString &bareJid);
+    Q_INVOKABLE bool isDiscovered(const QString &jid);
+    Q_INVOKABLE void listNode(const QString &bareJid);
 
     ListModel* model();
 
