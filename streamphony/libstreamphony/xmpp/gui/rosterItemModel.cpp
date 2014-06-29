@@ -26,10 +26,6 @@
 
 RosterItemModel::RosterItemModel(QObject* parent) : QStandardItemModel(parent)
 {
-//    addRosterItemIfDontExist("jkhjkhkhkhk");
-//    addRosterItemIfDontExist("uuuu");
-//    addRosterItemIfDontExist("kkkkkkk");
-//    addRosterItemIfDontExist("jjjjjjjj");
 }
 
 rosterItem* RosterItemModel::getRosterItemFromBareJid(const QString& bareJid)
@@ -55,10 +51,12 @@ rosterItem* RosterItemModel::getOrCreateItem(const QString& bareJid)
 void RosterItemModel::updatePresence(const QString& bareJid, const QMap<QString, QXmppPresence>& presences)
 {
     rosterItem *item = getOrCreateItem(bareJid);
-    if (!presences.isEmpty())
+    if (!presences.isEmpty()) {
         item->setPresence(*presences.begin());
-    else
+    } else {
         item->setPresence(QXmppPresence(QXmppPresence::Unavailable));
+        removeRosterEntry(bareJid);
+    }
 }
 
 void RosterItemModel::updateRosterEntry(const QString& bareJid, const QXmppRosterIq::Item& rosterEntry)
