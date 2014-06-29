@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file>gui/Main.qml</file>
+        <file>gui/MainWindow.qml</file>
         <file>gui/icons/ffw.png</file>
         <file>gui/icons/pause.png</file>
         <file>gui/icons/play.png</file>
@@ -14,5 +14,6 @@
         <file>gui/icons/profile.png</file>
         <file>gui/ScrollBar.qml</file>
         <file>gui/Results.qml</file>
+        <file>gui/Main.qml</file>
     </qresource>
 </RCC>

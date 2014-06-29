@@ -20,7 +20,7 @@ public:
     explicit XmppManager(QObject *parent = 0);
     ~XmppManager() override;
 
-    void signIn();
+    Q_INVOKABLE void signIn(const QString &username, const QString &password, bool rememberPassword);
     QStringList allAvailableJids() const;
     const QXmppRosterIq::Item roster(const QString &bareJid);
     QByteArray userUniqueId(const QString &bareJid);
@@ -31,6 +31,7 @@ public:
     bool isSigninCompleted() const;
 
 signals:
+    void signInSuccessfull();
     void signInCompleted();
     void avatarChanged(const QString &bareJid);
 

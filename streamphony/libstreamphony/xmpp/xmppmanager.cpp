@@ -23,14 +23,19 @@ XmppManager::~XmppManager()
 {
 }
 
-void XmppManager::signIn()
+void XmppManager::signIn(const QString &username, const QString &password, bool rememberPassword)
 {
     m_rosterItemModel.clear();
 
+    SettingsManager::instance()->setXmppUsername(username);
+    if (rememberPassword)
+        SettingsManager::instance()->setPassword(password);
+    else
+        SettingsManager::instance()->setPassword(QStringLiteral(""));
+
     m_xmppClient.configuration().setHost(XMPP_SERVER);
-    m_xmppClient.configuration().setJid(SettingsManager::instance()->xmppUsername() + QStringLiteral("@") + XMPP_SERVER);
-    m_xmppClient.configuration().setPassword(SettingsManager::instance()->password());
-    //m_xmppClient.configuration().setPassword(QStringLiteral("498059"));
+    m_xmppClient.configuration().setJid(username + QStringLiteral("@") + XMPP_SERVER);
+    m_xmppClient.configuration().setPassword(password);
 
     m_xmppClient.connectToServer(m_xmppClient.configuration());
 
@@ -80,6 +85,8 @@ void XmppManager::signIn()
     });
 
     connect(&m_xmppClient, &QXmppClient::connected, [&](){
+        emit signInSuccessfull();
+
         qDebug() << "XMPP Connected:";
         m_vCardCache.requestVCard(m_xmppClient.configuration().jidBare());
     });

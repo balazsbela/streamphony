@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
     });
 
     XmppManager xmppManager(&app);
-    xmppManager.signIn();
 
     LocalFileContentResolver *resolver = new LocalFileContentResolver(&app);
     LightHttpDaemon daemon(settingsManager.httpPort(), MIN_PORT, MAX_PORT, &app);
@@ -78,6 +77,7 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<XmppManager>("Streamphony", 1, 0, "XmppManager", QString("XmppManager not creatable from QML"));
     qmlRegisterUncreatableType<PhononMediaPlayer>("Streamphony", 1, 0, "MediaPlayer", QString("MediaPlayer not creatable from QML"));
     qmlRegisterUncreatableType<ConnectionManager>("Streamphony", 1, 0, "ConnectionManager", QString("ConnectionManager not creatable from QML"));
+    qmlRegisterUncreatableType<ConnectionManager>("Streamphony", 1, 0, "SettingsManager", QString("ConnectionManager not creatable from QML"));
 
     QQmlApplicationEngine engine;
     engine.addImageProvider(QStringLiteral("avatars"), imageProvider);
@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(QStringLiteral("_xmppManager"), &xmppManager);
     engine.rootContext()->setContextProperty(QStringLiteral("_mediaPlayer"), &mediaPlayer);
     engine.rootContext()->setContextProperty(QStringLiteral("_connectionManager"), &connectionManager);
+    engine.rootContext()->setContextProperty(QStringLiteral("_settingsManager"), &settingsManager);
     engine.load(QUrl(QStringLiteral("qrc:///gui/Main.qml")));
 
     return app.exec();
