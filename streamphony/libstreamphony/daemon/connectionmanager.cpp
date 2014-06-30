@@ -48,7 +48,8 @@ void ConnectionManager::populateNodeHash()
 
         if (nodeIdMap[hash] != nullptr && nodeIdMap[hash]->jid() == jid) {
             if (nodeIdMap[hash]->queryRunning()) {
-                return;
+                // TODO: UNCOMMENT
+                //        return;
             }
         }
         debugConnectionManager() << "Launching ip query for:" << jid << ":" << m_xmppManager->fullName(jid) << hash;
