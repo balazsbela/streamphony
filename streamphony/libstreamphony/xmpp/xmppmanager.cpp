@@ -88,7 +88,7 @@ void XmppManager::signIn(const QString &username, const QString &password, bool 
             // Facebook is retarded and puts me into some weird group and we don't get a presence update
             // TODO: REMOVE AFTER PRESENTATION
             // Restrict queries to these two names to speed things up for the presentation
-            if (roster.name().contains("Balázs Béla") || roster.name().contains("Sebestyén Boglárka")) {
+            if (roster.name().contains("Balázs Béla") || roster.name().contains("Sebestyén Boglárka") || roster.name().contains("Liis Jaks")) {
                 m_presenceHash[roster.bareJid()] = QXmppPresence::Available;
                 m_rosterItemModel.updatePresence(bareJid, {{"", QXmppPresence::Available}});
                 m_rosterItemModel.updateRosterEntry(bareJid, m_xmppClient.rosterManager().getRosterEntry(bareJid));
