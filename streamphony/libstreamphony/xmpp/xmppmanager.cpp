@@ -37,25 +37,31 @@ void XmppManager::signIn(const QString &username, const QString &password, bool 
     m_xmppClient.configuration().setJid(username + QStringLiteral("@") + XMPP_SERVER);
     m_xmppClient.configuration().setPassword(password);
 
-    connect(&m_xmppClient.rosterManager(), &QXmppRosterManager::presenceChanged, [&](const QString& bareJid, const QString& resource) {
+    m_xmppClient.connectToServer(m_xmppClient.configuration());
 
-        const QXmppPresence &presence = m_xmppClient.rosterManager().getPresence(bareJid, resource);
+    connect(&m_xmppClient.rosterManager(), &QXmppRosterManager::rosterReceived, [this]() {
+        for (const QString &bareJid : m_xmppClient.rosterManager().getRosterBareJids()) {
+            const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
+            Q_UNUSED(roster);
+            m_vCardCache.requestVCard(bareJid);
+            //qDebug() << roster.bareJid() <<  roster.name();
+        }
+    });
+
+    connect(&m_xmppClient.rosterManager(), &QXmppRosterManager::presenceChanged, [&](const QString& bareJid, const QString& resource) {
+        QMap<QString, QXmppPresence> presences = m_xmppClient.rosterManager().getAllPresencesForBareJid(bareJid);
+        QXmppPresence& presence = presences[resource];
+
+        m_rosterItemModel.updatePresence(bareJid, presences);
 
         const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
-
-        // -------------------------------------------------
-        // Uncomment this when the hack below is removed
-        // m_presenceHash[roster.bareJid()] = presence;
-        // ----------------------- HAAAAACK------------------------------
-
-        if (presence.type() == QXmppPresence::Available) {
+        m_presenceHash[roster.bareJid()] = presence;
+        if (presence.availableStatusType() == QXmppPresence::Online) {
             //  qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText();
-            m_rosterItemModel.updatePresence(bareJid, {{"", presence}});
             m_rosterItemModel.updateRosterEntry(bareJid, m_xmppClient.rosterManager().getRosterEntry(bareJid));
-            qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText() << presence.type() << presence.availableStatusType();
-        } else {
-            m_rosterItemModel.removeRosterEntry(bareJid);
         }
+
+        qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText() << presence.type() << presence.availableStatusType();
 
         utils::singleShotTimer(3000, [&]() {
             if (!m_signInCompleted) {
@@ -78,32 +84,9 @@ void XmppManager::signIn(const QString &username, const QString &password, bool 
         qDebug() << "XMPP Error:" << error;
     });
 
-    connect(&m_xmppClient.rosterManager(), &QXmppRosterManager::rosterReceived, [this]() {
-        for (const QString &bareJid : m_xmppClient.rosterManager().getRosterBareJids()) {
-            const QXmppRosterIq::Item &roster = m_xmppClient.rosterManager().getRosterEntry(bareJid);
-            Q_UNUSED(roster);
-
-            m_vCardCache.requestVCard(bareJid);
-
-            // ----------------------- HAAAAACK------------------------------
-
-            // Facebook is retarded and puts me into some weird group and we don't get a presence update
-            // TODO: REMOVE AFTER PRESENTATION
-            // Restrict queries to these two names to speed things up for the presentation
-            if (roster.name().contains("Balázs Béla") || roster.name().contains("Sebestyén Boglárka")) {
-                m_presenceHash[roster.bareJid()] = QXmppPresence::Available;
-                m_rosterItemModel.updatePresence(bareJid, {{"", QXmppPresence::Available}});
-                m_rosterItemModel.updateRosterEntry(bareJid, m_xmppClient.rosterManager().getRosterEntry(bareJid));
-            }
-
-            // -----------------------END HAAAAACK------------------------------
-
-            qDebug() << m_xmppClient.rosterManager().getPresence(bareJid, "").type();
-        }
-    });
-
     connect(&m_xmppClient, &QXmppClient::connected, [&](){
         emit signInSuccessfull();
+
         qDebug() << "XMPP Connected:";
         m_vCardCache.requestVCard(m_xmppClient.configuration().jidBare());
     });
@@ -124,15 +107,13 @@ void XmppManager::signIn(const QString &username, const QString &password, bool 
         if(m_vCardCache.isVCardAvailable(bareJid))
             updateVCard(bareJid);
     });
-
-    m_xmppClient.connectToServer(m_xmppClient.configuration());
 }
 
 QStringList XmppManager::allAvailableJids() const
 {
     const QList<QString> &keys = m_presenceHash.keys();
-    QList<QString>::const_iterator availableJids =  std::find_if(keys.begin(),keys.end(), [this](const QString &key) -> bool {
-        return m_presenceHash[key].type() == QXmppPresence::Available;
+    QList<QString>::const_iterator availableJids =  std::find_if(keys.begin(),keys.end(), [&](const QString &key) -> bool {
+        return m_presenceHash[key].availableStatusType() == QXmppPresence::Online;
     });
 
     QStringList results;
