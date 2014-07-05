@@ -97,6 +97,8 @@ void XmppManager::signIn(const QString &username, const QString &password, bool 
             }
 
             // -----------------------END HAAAAACK------------------------------
+
+            qDebug() << m_xmppClient.rosterManager().getPresence(bareJid, "").type();
         }
     });
 
