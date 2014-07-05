@@ -53,6 +53,8 @@ void XmppManager::signIn(const QString &username, const QString &password, bool 
             m_rosterItemModel.updatePresence(bareJid, {{"", presence}});
             m_rosterItemModel.updateRosterEntry(bareJid, m_xmppClient.rosterManager().getRosterEntry(bareJid));
             qDebug() << roster.name() << roster.bareJid() << "Online" << presence.statusText() << presence.type() << presence.availableStatusType();
+        } else {
+            m_rosterItemModel.removeRosterEntry(bareJid);
         }
 
         utils::singleShotTimer(3000, [&]() {
