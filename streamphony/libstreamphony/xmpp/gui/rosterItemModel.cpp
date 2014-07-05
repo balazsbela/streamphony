@@ -99,9 +99,6 @@ QVariant RosterItemModel::data(const QModelIndex &index, int role) const
         return QVariant();
 
     const rosterItem *item = m_jidRosterItemMap[m_jidRosterItemMap.keys()[index.row()]];
-    if (item == nullptr) {
-        return {};
-    }
 
     switch(role) {
         case NameRole:
