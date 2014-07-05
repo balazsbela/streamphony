@@ -29,36 +29,14 @@ int main(int argc, char *argv[])
 
     DhtManager dht(&app);
 
-    // Ridiculous, but safe
+    // Ridiculous, but couldn't find a simpler and faster way to find out the external ip of a router
     QNetworkAccessManager accessManager;
     QNetworkReply *networkReply = accessManager.get(QNetworkRequest(QUrl("http://ipecho.net/plain")));
     QObject::connect(networkReply, &QNetworkReply::finished, [&]() {
-        Portfwd portForwarder;
-        const std::string externalIp = QString::fromUtf8(networkReply->readAll()).toStdString();
-
-        if (portForwarder.init(2000)) {
-            qDebug() << "Behind a router!";
-            if (networkReply->error() == QNetworkReply::NoError)
-                dht.setOwnIp(externalIp);
-            else
-                qWarning() << "ERROR GETTING EXTERNAL IP!";
-        } else {
-            bool set = false;
-            qDebug() << "No UPNP available, assuming we are not behind a router";
-            for (const QHostAddress &address : QNetworkInterface::allAddresses()) {
-                if (address.protocol() == QAbstractSocket::IPv4Protocol && address != QHostAddress(QHostAddress::LocalHost))
-                if (address.toString().startsWith(QStringLiteral("192"))) {
-                    qDebug() << "Using ip:" << address.toString();
-                    dht.setOwnIp(address.toString().toStdString());
-                    set = true;
-                }
-            }
-
-            if (!set) {
-                qDebug() << "Using external ip:" << QString::fromStdString(externalIp);
-                dht.setOwnIp(externalIp);
-            }
-        }
+        if (networkReply->error() == QNetworkReply::NoError)
+            dht.setOwnIp(QString::fromUtf8(networkReply->readAll()).toStdString());
+        else
+            qWarning() << "ERROR GETTING EXTERNAL IP!";
     });
 
     XmppManager xmppManager(&app);
