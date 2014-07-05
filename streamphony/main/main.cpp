@@ -51,7 +51,6 @@ int main(int argc, char *argv[])
                     qDebug() << "Using ip:" << address.toString();
                     dht.setOwnIp(address.toString().toStdString());
                     set = true;
-                    break;
                 }
             }
 
